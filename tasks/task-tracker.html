@@ -62,6 +62,7 @@
   .phase-3 .phase-num { background: #e1f5ee; color: #085041; }
   .phase-4 .phase-num { background: var(--ok-bg); color: var(--ok-txt); }
   .phase-5 .phase-num { background: #fbeaf0; color: #72243e; }
+  .phase-6 .phase-num { background: #e1f5ee; color: #085041; }
 
   .task-grid { display: grid; gap: 8px; }
 
@@ -583,23 +584,21 @@ jobs:
       {
         id: "p5-t2", title: "Set Worker URL in js/api.js",
         file: "js/api.js", dep: "p2-t3",
-        detail: `<p>Before final deployment, make sure the <code>WORKER_URL</code> constant in <code>js/api.js</code> is set to your actual Cloudflare Worker URL.</p>
-<p>Open <code>js/api.js</code> and confirm the first line reads:</p>
-<pre>const WORKER_URL = 'https://meeting-prep-proxy.YOUR-SUBDOMAIN.workers.dev';</pre>
-<p>Replace <code>YOUR-SUBDOMAIN</code> with your actual Cloudflare subdomain (visible on the Worker page in the Cloudflare dashboard).</p>`
+        detail: `<p>Set the <code>WORKER_URL</code> constant in <code>js/api.js</code> to your actual Cloudflare Worker URL.</p>
+<p><strong>Important:</strong> The Worker URL includes a hex version prefix added by Cloudflare. Find the full URL in:<br>
+Cloudflare dashboard → click <code>meeting-prep-proxy</code> → Settings → Domains &amp; Routes</p>
+<p>The URL format is:</p>
+<pre>const WORKER_URL = 'https://XXXXXXXX-meeting-prep-proxy.YOUR-SUBDOMAIN.workers.dev';</pre>
+<p>Copy the full URL including the hex prefix. Do not use the simpler URL without the prefix — it may not work.</p>`
       },
       {
         id: "p5-t3", title: "Final commit, push, and verify live deployment",
         file: null, dep: "p5-t1",
         detail: `<ol>
 <li>Save all files in VS Code.</li>
-<li>In GitHub Desktop: commit with message <code>Complete web application — ready for deployment</code>.</li>
-<li>Push to main.</li>
-<li>On GitHub: click the <strong>Actions</strong> tab. Watch both workflows run:<br>
-   — <strong>Deploy Cloudflare Worker</strong> (if worker/ changed)<br>
-   — <strong>Deploy to GitHub Pages</strong></li>
-<li>When both show green checkmarks, visit your GitHub Pages URL:<br>
-   <code>https://YOUR-USERNAME.github.io/meeting-prep-agent</code></li>
+<li>Run: <code>git add . &amp;&amp; git commit -m "Complete web application" &amp;&amp; git push</code></li>
+<li>On GitHub: click the <strong>Actions</strong> tab. Both workflows should run and show green checkmarks.</li>
+<li>When both are green, visit: <code>https://YOUR-USERNAME.github.io/meeting-prep-agent</code></li>
 <li>Test the full application flow end to end.</li>
 </ol>`
       },
@@ -620,6 +619,75 @@ jobs:
 <li>Application works on Chrome, Firefox, and Safari</li>
 <li>Application is usable on a mobile phone screen</li>
 </ul>`
+      }
+    ]
+  },
+  {
+    id: 6, label: "Phase 6", title: "Session 3 — bug fixes &amp; enhancements",
+    desc: "Fixes identified during Session 2 testing",
+    tasks: [
+      {
+        id: "p6-t1", title: "Fix API response parsing — implement getTextFromResponse()",
+        file: "js/app.js", dep: null,
+        detail: `<p>Three functions in <code>app.js</code> crash when the Anthropic API returns an error or unexpected response structure because they assume <code>data.content[0]</code> always exists. Fix all three with a single utility function.</p>
+<p>Add this function near the top of <code>js/app.js</code>, after the state declaration:</p>
+<pre>function getTextFromResponse(data) {
+  if (!data?.content) {
+    throw new Error('API error: ' + JSON.stringify(data));
+  }
+  const textBlock = data.content.find(b => b.type === 'text');
+  if (!textBlock) {
+    throw new Error('No text block in response');
+  }
+  return textBlock.text;
+}</pre>
+<p>Then replace the fragile parsing in all three functions:</p>
+<ul>
+<li><strong>runDiscovery()</strong>: replace <code>data.content[0].text</code> with <code>getTextFromResponse(data)</code></li>
+<li><strong>investigateTopic()</strong>: replace the <code>data.content.filter(...)</code> chain — see Entry 110</li>
+<li><strong>runSynthesis()</strong>: replace <code>data.content[0].text</code> with <code>getTextFromResponse(data)</code></li>
+</ul>`
+      },
+      {
+        id: "p6-t2", title: "Investigate Edge tracking prevention warnings for docx CDN",
+        file: "index.html", dep: null,
+        detail: `<p>Microsoft Edge shows "Tracking Prevention blocked access to storage" for the docx CDN URL. Determine whether this prevents the .docx download from working.</p>
+<p>Test: complete a full briefing and click "Download .docx". If the download works despite the warnings, the warnings are cosmetic (Edge blocks CDN storage writes but not script execution). If the download fails, an alternative CDN or self-hosted approach is needed.</p>
+<p>The CDN URL in use: <code>https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.js</code></p>`
+      },
+      {
+        id: "p6-t3", title: "Fix attendee research prompt — check if person is deceased",
+        file: "js/app.js", dep: "p6-t1",
+        detail: `<p>The agent researched a very public figure without noting they are deceased, treating them as a current active participant. Fix the per-topic investigation prompt to verify person status.</p>
+<p>In <code>investigateTopic()</code>, update the prompt for attendee-type topics to include:</p>
+<pre>If researching a person, first confirm whether they are currently
+alive and in their stated role. If the person is deceased, state
+this clearly as the first sentence and note when they died. Do not
+present a deceased person as a current meeting participant.</pre>`
+      },
+      {
+        id: "p6-t4", title: "Push corrected docs/ folder to GitHub repository",
+        file: "docs/", dep: null,
+        detail: `<p>The documentation files were updated during Session 2 but the corrected versions have not been committed to the repository. Copy the updated files into the local <code>docs/</code> folder:</p>
+<ul>
+<li><code>PROJECT_DOCUMENTATION.md</code></li>
+<li><code>APPENDIX_SOFTWARE_TECHNOLOGIES.md</code></li>
+<li><code>IMPLEMENTATION_INSTRUCTIONS.md</code></li>
+</ul>
+<p>Then: <code>git add . &amp;&amp; git commit -m "Update docs with Session 2 corrections" &amp;&amp; git push</code></p>`
+      },
+      {
+        id: "p6-t5", title: "Google Calendar MCP integration",
+        file: "js/app.js", dep: "p6-t1",
+        detail: `<p>Add Google Calendar as a meeting source option alongside manual entry. When the user selects "Google Calendar", the application fetches their upcoming events and allows them to select one to auto-populate the meeting details form.</p>
+<p>This requires:</p>
+<ul>
+<li>Anthropic API call with Google Calendar MCP server declared</li>
+<li>Event list rendered as selectable cards</li>
+<li>Selected event auto-fills all meeting detail fields</li>
+</ul>
+<p>MCP server URL: <code>https://gcal.mcp.claude.com/mcp</code><br>
+Requires Google Calendar to be connected in Claude.ai integrations.</p>`
       }
     ]
   }

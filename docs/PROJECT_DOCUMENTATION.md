@@ -2,7 +2,7 @@
 
 **Course:** Computer Programming — AI Agents Module  
 **Project:** Meeting Prep Agent  
-**Last Updated:** Session 2, Entry 107 — Full audit complete; all documentation updated; Version 1 complete
+**Last Updated:** Session 3, Entry 112 — Session 3 opened; diary continuity confirmed; updated task tracker requested
 
 ---
 
@@ -3372,7 +3372,249 @@ All tasks complete for Version 1.
 
 ---
 
-*Future entries appended below as work continues.*
+### Entry 108 — Bug: synthesis fails with "Cannot read properties of undefined (reading '0')"
+**Date:** Session 2  
+**Type:** Bug identified during testing — fix required
+
+**Error message:** "Synthesis failed: Cannot read properties of
+undefined (reading '0'). Please try again."
+
+**Root cause:** In `runSynthesis()` in js/app.js, the response
+parsing assumes `data.content[0]` exists and has a `.text` property:
+```javascript
+const text = data.content[0].text.replace(/```json|```/g, '').trim();
+```
+If `data.content` is undefined (API error response) or if the first
+content block is not a text block, this throws the observed error.
+
+**Fix — defensive parsing using `.find()` by type:**
+```javascript
+const textBlock = data.content?.find(b => b.type === 'text');
+if (!textBlock) {
+  throw new Error('No text in response: ' + JSON.stringify(data));
+}
+const text = textBlock.text.replace(/```json|```/g, '').trim();
+```
+
+The same fix should be applied to `runDiscovery()` which has the
+same fragile pattern.
+
+**Priority:** High — this blocks the final step of the application.
+**Fix scheduled:** Start of Session 3.
+
+**Outstanding items for Session 3 — updated:**
+1. Fix synthesis/discovery parsing bug (Entry 108) — HIGH PRIORITY
+2. Google Calendar MCP integration
+3. Fix attendee research prompt for deceased persons (Entry 106)
+4. Update docs/ folder in repository with corrected documents
+5. Appendix A sections not yet live-verified (Anthropic console,
+   Claude.ai setup)
+
+---
+
+### Entry 109 — Bug: "Unexpected token 'export'" in browser console
+**Date:** Session 2  
+**Type:** Bug identified — critical; prevents application from loading
+
+**Error:** `Uncaught SyntaxError: Unexpected token 'export'`
+at index.js:19290 (this is the docx.js CDN file, not our code)
+
+**Root cause:** The `worker/proxy.js` file uses ES Module syntax:
+```javascript
+export default {
+  async fetch(request, env) { ... }
+};
+```
+
+This is correct syntax for a Cloudflare Worker — but the browser
+is also loading `worker/proxy.js` as part of the GitHub Pages
+deployment (because `deploy-pages.yml` uploads the entire repository
+with `path: '.'`). When the browser encounters `export default` in
+a script file loaded without `type="module"`, it throws this error.
+
+**Wait — actually the error points to index.js line 19290, which
+is inside the docx.js CDN library, not proxy.js.** This suggests
+the issue may be that docx.js itself uses ES module syntax and
+is being loaded without the correct module type.
+
+**The CDN URL being used:**
+```html
+<script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.js"></script>
+```
+
+The `docx@8` library's build at `index.js` may be an ES module
+rather than a UMD/CommonJS bundle. The browser script tag without
+`type="module"` cannot parse `export` statements.
+
+**Fix — use the UMD build of docx.js:**
+Replace the CDN script tag in index.html with the UMD bundle:
+```html
+<script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.js"></script>
+```
+
+The UMD (Universal Module Definition) build wraps the library in
+a way that works as a plain `<script>` tag and exposes `docx` as
+a global variable — which is how `docx-export.js` accesses it.
+
+**Priority:** Critical — this error fires on page load and likely
+breaks the docx download functionality entirely.
+
+**Fix scheduled:** Start of Session 3 alongside the synthesis bug.
+
+**Updated outstanding items for Session 3:**
+1. Fix "Unexpected token 'export'" — change docx CDN to UMD build
+2. Fix synthesis/discovery parse error (Entry 108)
+3. Fix attendee deceased check prompt (Entry 106)
+4. Google Calendar MCP integration
+5. Update docs/ folder in repository
+
+---
+
+### Entry 110 — Bug: "Cannot read properties of undefined (reading 'filter')" during topic investigation
+**Date:** Session 2  
+**Type:** Bug identified during testing
+
+**Error:** "Research failed: Cannot read properties of undefined
+(reading 'filter')"
+
+**Where it occurs:** During `investigateTopic()` in js/app.js,
+when a topic's "Investigate now" button is clicked.
+
+**Root cause:** In `investigateTopic()`, the response from the
+API is processed with:
+```javascript
+const summary = data.content
+  .filter(b => b.type === 'text')
+  .map(b => b.text)
+  .join(' ')
+  .trim();
+```
+
+`data.content` is `undefined` — same root cause as Entry 108.
+When the API returns an error response (rate limit, overload,
+or any non-success response), `data` has no `content` property.
+Calling `.filter()` on `undefined` throws this error.
+
+**This is the same defensive parsing problem as Entry 108 —
+`data.content` must be checked for existence before use.**
+
+**Fix for `investigateTopic()` in js/app.js:**
+```javascript
+// Replace:
+const summary = data.content
+  .filter(b => b.type === 'text')
+  .map(b => b.text)
+  .join(' ')
+  .trim();
+
+// With:
+if (!data.content) {
+  throw new Error('No content in response: ' + JSON.stringify(data));
+}
+const summary = data.content
+  .filter(b => b.type === 'text')
+  .map(b => b.text)
+  .join(' ')
+  .trim();
+```
+
+**Pattern across all three API calls — same fix needed in:**
+1. `runDiscovery()` — `data.content[0].text` (Entry 108)
+2. `investigateTopic()` — `data.content.filter(...)` (this entry)
+3. `runSynthesis()` — `data.content[0].text` (Entry 108)
+
+**All three will be fixed together at start of Session 3 with
+a single defensive utility function:**
+
+```javascript
+function getTextFromResponse(data) {
+  if (!data?.content) {
+    throw new Error('API error: ' + JSON.stringify(data));
+  }
+  const textBlock = data.content.find(b => b.type === 'text');
+  if (!textBlock) {
+    throw new Error('No text block in response');
+  }
+  return textBlock.text;
+}
+```
+
+This replaces the fragile inline parsing in all three functions
+with one tested, reliable utility.
+
+**Updated priority list for Session 3:**
+1. Fix docx CDN export error (Entry 109) — index.umd.js
+2. Fix all three API response parsing bugs with utility function
+3. Fix attendee deceased check prompt (Entry 106)
+4. Google Calendar MCP integration
+5. Update docs/ folder in repository
+
+---
+
+### Entry 111 — Browser tracking prevention blocking docx CDN; synthesis bug confirmed separate; session closed
+**Date:** Session 2  
+**Type:** Bug update + session closure
+
+**Two findings from final testing:**
+
+**Finding 1 — Tracking Prevention blocking docx CDN:**
+Microsoft Edge's Tracking Prevention is blocking storage access for
+`https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.js`
+The messages appear four times, suggesting the browser is making
+multiple attempts. This may prevent docx.js from loading correctly,
+which would cause the .docx download to fail — but it should not
+affect the synthesis API call itself.
+
+The "Tracking Prevention blocked access to storage" message means
+Edge is blocking the CDN from writing to localStorage or cookies —
+this is cosmetic for our use case since docx.js doesn't need
+storage to function. The library should still load and work despite
+these warnings.
+
+**Finding 2 — Synthesis bug is confirmed separate from docx issue:**
+The synthesis error "Cannot read properties of undefined (reading '0')"
+persists after the CDN fix. This confirms the synthesis bug (Entry 108)
+is an independent issue with API response parsing in `runSynthesis()`,
+not related to docx.js loading. The `getTextFromResponse()` utility
+function fix (Entry 110) will resolve this.
+
+**Session 2 officially closed.**
+
+**Session 3 opens with (in priority order):**
+1. Implement `getTextFromResponse()` utility function — fixes all
+   three API response parsing bugs in runDiscovery(), investigateTopic(),
+   and runSynthesis() simultaneously
+2. Investigate Edge tracking prevention warnings for docx CDN —
+   determine if they affect functionality or are cosmetic only
+3. Fix attendee deceased check prompt (Entry 106)
+4. Push corrected docs/ folder to GitHub repository
+5. Google Calendar MCP integration
+
+---
+
+### Entry 112 — Session 3 commenced; diary continuity confirmed
+**Date:** Session 3  
+**Type:** Session opening + process decision
+
+**Session 3 opened.**
+
+**Decision: continue the existing diary — do not start a new one.**
+Rationale: the diary's value is its complete, unbroken history from
+project inception. Context from Sessions 1 and 2 is essential for
+understanding Session 3 decisions. Session numbers are headings
+within a single document, not separate files.
+
+**Deliverable requested at session open:**
+Updated task tracker webpage — to be produced before beginning
+the bug fixes.
+
+**Session 3 agenda (from Entry 111):**
+1. Implement `getTextFromResponse()` utility — fixes all three
+   API response parsing bugs simultaneously
+2. Investigate Edge tracking prevention warnings for docx CDN
+3. Fix attendee deceased check prompt (Entry 106)
+4. Push corrected docs/ folder to GitHub repository
+5. Google Calendar MCP integration
 
 ---
 

@@ -2,6 +2,18 @@
 // app.js — application state and UI logic
 // ─────────────────────────────────────────────────────
 
+// ── API response utility ────────────────────────────
+function getTextFromResponse(data) {
+  if (!data?.content) {
+    throw new Error('API error: ' + JSON.stringify(data));
+  }
+  const textBlock = data.content.find(b => b.type === 'text');
+  if (!textBlock) {
+    throw new Error('No text block in response');
+  }
+  return textBlock.text;
+}
+
 // ── Application state ──────────────────────────────
 const state = {
   meeting: {},
@@ -75,7 +87,7 @@ would materially improve the briefing.`;
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const text = data.content[0].text.replace(/```json|```/g, '').trim();
+    const text = getTextFromResponse(data).replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(text);
 
     state.topics = parsed.topics || [];
@@ -242,15 +254,18 @@ async function investigateTopic(id) {
   showLoading(id);
   setPill(id, 'Researching…', 'pill-prog');
 
-  const prompt = `Research the following topic for a meeting briefing.
+const attendeeNote = topic.type === 'attendee'
+    ? `\nIf researching a person, first confirm whether they are currently alive and in their stated role. If the person is deceased, state this clearly as the first sentence and note when they died. Do not present a deceased person as a current meeting participant.\n`
+    : '';
+
+const prompt = `Research the following topic for a meeting briefing.
 Topic: ${topic.label}
 Search query: ${topic.query}
 Meeting context: ${state.meeting.title} — ${state.meeting.agenda}
-
+${attendeeNote}
 Return a concise 2–3 sentence summary of the most relevant recent
 findings. Be specific — include names, dates, and figures where
 available. Do not use generic filler.`;
-
   try {
     const data = await callClaude({
       model: 'claude-sonnet-4-20250514',
@@ -259,11 +274,7 @@ available. Do not use generic filler.`;
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const summary = data.content
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join(' ')
-      .trim();
+    const summary = getTextFromResponse(data);
 
     showResult(id, summary);
     setPill(id, 'Investigated', 'pill-done');
@@ -435,7 +446,7 @@ Do not reference or quote the private context.`;
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const text = data.content[0].text.replace(/```json|```/g, '').trim();
+    const text = getTextFromResponse(data).replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(text);
 
     sectionsEl.innerHTML = '';
