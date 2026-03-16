@@ -2,7 +2,7 @@
 
 **Course:** Computer Programming — AI Agents Module  
 **Project:** Meeting Prep Agent  
-**Last Updated:** Session 3, Entry 112 — Session 3 opened; diary continuity confirmed; updated task tracker requested
+**Last Updated:** Session 3, Entry 121 — Synthesis successful; briefing under review
 
 ---
 
@@ -3615,6 +3615,248 @@ the bug fixes.
 3. Fix attendee deceased check prompt (Entry 106)
 4. Push corrected docs/ folder to GitHub repository
 5. Google Calendar MCP integration
+
+---
+
+### Entry 113 — Task tracker syntax error fixed; missing closing bracket
+**Date:** Session 3  
+**Type:** Bug fix — self-introduced
+
+**Error:** `Uncaught SyntaxError: Unexpected token 'const'` at line 695
+
+**Cause:** When the Phase 6 tasks were added to the task tracker in
+Entry 112, the closing `];` for the PHASES array was omitted. The
+array object was closed (`}`) but the array itself was not (`];`),
+causing the parser to encounter `const STATUSES` as an unexpected
+token inside what it thought was still an array.
+
+**Fix:** Added the missing `];` after the Phase 6 closing brace.
+
+**Correction noted:** This was an error introduced by the session
+opening work, not by pre-existing code. Caught and fixed immediately.
+
+---
+
+### Entry 114 — Process commitment: re-read files after every edit
+**Date:** Session 3  
+**Type:** Process improvement — self-identified and instructor-acknowledged
+
+**Exchange recorded:** The instructor challenged the syntax error in
+Entry 113 as inconsistent with the standard of work expected. An
+honest explanation was given and accepted.
+
+**Root cause of the error — formally recorded:**
+The error was a boundary omission during string replacement. When
+replacing a block of text that ended at a structurally significant
+boundary (`];`), the replacement string omitted that boundary,
+effectively deleting it. This is a known failure mode of file
+editing without immediate compiler/linter feedback.
+
+**The distinction from a human developer:** A human in VS Code
+would have seen the syntax error highlighted in real time. The
+file edit was presented as correct without that feedback loop.
+
+**Commitment made and acknowledged:**
+Going forward, every file edit will be followed by a re-read of
+the affected section before the result is delivered. This applies
+to all files — HTML, JavaScript, YAML, Markdown — not just code.
+
+This commitment is not a one-session policy. It is a standing
+practice for the remainder of this project.
+
+---
+
+### Entry 115 — p6-t1 and p6-t3 being implemented together
+**Date:** Session 3  
+**Type:** Implementation
+
+**Combining p6-t1 and p6-t3 into a single app.js update:**
+- Add `getTextFromResponse()` utility function
+- Fix `runDiscovery()` — line: `data.content[0].text`
+- Fix `investigateTopic()` — line: `data.content.filter(...)`
+- Fix `runSynthesis()` — line: `data.content[0].text`
+- Add deceased person check to attendee investigation prompt
+
+Single commit covers both tasks. Producing corrected app.js now.
+
+---
+
+### Entry 116 — Correction: misleading line number reference in Edit 2 instructions
+**Date:** Session 3  
+**Type:** Process correction — instructor-identified
+
+**Error:** Edit 2 instructions said "around line 539 in your file."
+This line number came from the implementation instructions document
+(IMPLEMENTATION_INSTRUCTIONS.md), not from the actual js/app.js file
+on the student's computer. The two documents have completely different
+line counts. The reference was wrong and potentially confusing.
+
+**Correct approach:** When directing edits to files on the student's
+computer, describe the code to find by its content — not by line
+number — since line numbers vary between documents and between
+different versions of the same file.
+
+**Resolution provided:** Both occurrences of `data.content[0].text`
+in app.js need replacing — one in `runDiscovery()` (Edit 2) and
+one in `runSynthesis()` (Edit 4). The student correctly identified
+both lines independently.
+
+**Standing correction recorded:** Never reference line numbers from
+one document when directing edits to a different file.
+
+---
+
+### Entry 117 — app.js verified; p6-t1 and p6-t3 complete
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**app.js uploaded and verified.** All four edits confirmed correct:
+- getTextFromResponse() utility at lines 6–15 ✅
+- runDiscovery() fix at line 90 ✅
+- attendeeNote + updated prompt in investigateTopic() at lines 257–268 ✅
+- investigateTopic() summary fix at line 277 ✅
+- runSynthesis() fix at line 449 ✅
+
+**Minor cosmetic note:** Indentation on lines 257 and 261 is slightly
+inconsistent (missing leading spaces). Does not affect functionality.
+
+**Committing with message:**
+"Fix API response parsing; add deceased person check for attendees"
+
+**Task tracker updates due after push:**
+- p6-t1: Fix API response parsing → Done ✅
+- p6-t3: Fix attendee deceased check → Done ✅
+
+---
+
+### Entry 118 — Both workflows green after bug fix commit; testing synthesis and download
+**Date:** Session 3  
+**Type:** Live implementation — verification
+
+**Both GitHub Actions workflows completed successfully:**
+- Deploy to GitHub Pages ✅
+- Deploy Cloudflare Worker ✅
+
+**p6-t1 and p6-t3 marked Done in task tracker.**
+
+**Next:** Full end-to-end test focusing on:
+1. Synthesis — does it complete without error?
+2. .docx download — does the file save correctly?
+3. Edge tracking prevention warnings — are they cosmetic or blocking?
+
+Awaiting test results.
+
+---
+
+### Entry 119 — Synthesis rate limit error; getTextFromResponse() confirmed working
+**Date:** Session 3  
+**Type:** Issue identified — rate limit, not a bug
+
+**Positive finding:** The `getTextFromResponse()` utility is working
+correctly. Instead of a cryptic "Cannot read properties of undefined"
+crash, the application now surfaces a clear, actionable error:
+"API error: rate_limit_error — This request would exceed your
+organization's rate limit of 30,000 input tokens per minute"
+
+**The actual problem:** The synthesis API call is sending too many
+tokens in a single request. The research results from multiple
+investigated topics, combined with the full synthesis prompt
+(meeting details, 5-section structure specification, private
+context), exceeds 30,000 tokens per minute for the account.
+
+**Root cause options:**
+1. The research results accumulated during Phase 2 are very long
+   — each "Investigate now" result can be several paragraphs
+2. The synthesis prompt itself is moderately long
+3. The account is on a free or low-tier plan with a 30k TPM limit
+   (paid accounts typically have much higher limits)
+
+**Possible fixes:**
+
+**Fix A — Truncate research results before synthesis:**
+Limit each research result summary to a maximum length before
+passing to the synthesis prompt. Results longer than ~200 words
+get trimmed to their first 200 words.
+
+**Fix B — Reduce max_tokens in the synthesis call:**
+The synthesis call currently requests max_tokens: 1000. Reducing
+this reduces the output token count, but the rate limit error
+references INPUT tokens — so this may not help.
+
+**Fix C — Wait and retry:**
+The rate limit is per minute. Simply waiting 60 seconds and
+retrying will work if the account hasn't sustained high usage.
+Add a "Please wait a moment and try again" message to the error.
+
+**Fix D — Upgrade the Anthropic account:**
+Paid accounts have significantly higher rate limits. For a
+classroom deployment this is the right long-term answer.
+
+**Recommended immediate fix: Fix A + better error message.**
+Truncate results and improve the error message to tell the user
+to wait 60 seconds before retrying.
+
+**This is NOT a blocker for the .docx functionality itself.**
+The .docx generation code has not been tested yet — the rate
+limit prevents reaching it. Once the synthesis succeeds, the
+download should work.
+
+---
+
+### Entry 120 — UX enhancement: show inactive Generate button with progress count
+**Date:** Session 3  
+**Type:** UX enhancement identified — instructor-directed
+
+**Issue observed:** The "Generate briefing document" button only
+appears after all research topics have been actioned. Users have
+no indication that the button exists or what they need to do to
+unlock it.
+
+**Proposed improvement:**
+- Show the "Generate briefing document" button immediately when
+  the research queue opens, but in a greyed-out / disabled state
+- Display a progress count alongside it: "5 of 6 topics actioned"
+- When all topics have a response (investigated, discarded, or
+  postponed), the button becomes coloured and active
+- This gives the user a clear affordance and a sense of progress
+  throughout the queue
+
+**Implementation:** In `app.js`:
+- Render the complete banner (with disabled button) when the queue
+  opens, not only when it completes
+- Update the counter and button state in `updateQueueCount()`
+- Remove the `display:none` from `complete-banner` initial state;
+  instead control via button disabled state and visual styling
+
+**Priority:** Medium — good UX but not blocking functionality.
+Scheduled as a Phase 7 enhancement.
+
+**Current status:** Proceeding with synthesis test — the button
+does appear once all 6 topics are actioned.
+
+---
+
+### Entry 121 — Synthesis successful; briefing document generated; reviewing for correctness
+**Date:** Session 3  
+**Type:** Live implementation milestone
+
+**Synthesis completed successfully.** The rate limit issue resolved
+naturally — sufficient time elapsed between the investigation calls
+and the synthesis call for the token counter to reset.
+
+**Briefing document generated.** Instructor reviewing content for
+correctness. Findings to be documented upon completion of review.
+
+**What this confirms:**
+- getTextFromResponse() fix working correctly ✅
+- Synthesis prompt producing structured JSON ✅
+- makeSectionCard() rendering sections correctly ✅
+- Rate limit is a timing issue, not a structural one — manageable
+  by pacing API calls or upgrading account tier
+
+**Still to verify:**
+- .docx download — not yet tested this session
+- Content quality of the briefing sections
 
 ---
 
