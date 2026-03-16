@@ -2,6 +2,9 @@
 // app.js — application state and UI logic
 // ─────────────────────────────────────────────────────
 
+// ── Google OAuth configuration ──────────────────────
+const GOOGLE_CLIENT_ID = 'YOUR-CLIENT-ID.apps.googleusercontent.com';
+
 // ── API response utility ────────────────────────────
 function getTextFromResponse(data) {
   if (!data?.content) {
@@ -536,6 +539,7 @@ async function fetchCalendarEvents() {
   eventList.innerHTML = '';
 
   try {
+    const accessToken = await getGoogleAccessToken();
     const data = await callClaude({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
@@ -544,6 +548,7 @@ async function fetchCalendarEvents() {
           type: 'url',
           url: 'https://gcal.mcp.claude.com/mcp',
           name: 'google-calendar',
+          authorization_token: accessToken,
         }
       ],
       tools: [
@@ -590,6 +595,24 @@ Return ONLY valid JSON — no markdown, no explanation:
       Could not fetch calendar events: ${err.message}
     </div>`;
   }
+}
+
+// ── Google OAuth token request ──────────────────────
+function getGoogleAccessToken() {
+  return new Promise((resolve, reject) => {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/calendar.readonly',
+      callback: (response) => {
+        if (response.error) {
+          reject(new Error('Google sign-in failed: ' + response.error));
+        } else {
+          resolve(response.access_token);
+        }
+      },
+    });
+    client.requestAccessToken({ prompt: 'consent' });
+  });
 }
 
 // ── Render a calendar event card ────────────────────
