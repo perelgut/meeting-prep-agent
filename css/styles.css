@@ -799,3 +799,84 @@ textarea:focus {
   .step-item span { display: none; }
   .step-item.active span { display: inline; }
 }
+/* ── 25. Mode selector ────────────────────────────── */
+.mode-selector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 14px 20px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mode-btn:hover {
+  border-color: var(--info-txt);
+  color: var(--info-txt);
+}
+
+.mode-btn.active {
+  border-color: var(--info-txt);
+  background: var(--info-bg);
+  color: var(--info-txt);
+}
+
+/* ── 26. Calendar event cards ─────────────────────── */
+.event-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.event-card:hover {
+  border-color: var(--info-txt);
+}
+
+.event-meta {
+  flex: 1;
+}
+
+.event-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.event-detail {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.btn-use-event {
+  padding: 8px 16px;
+  background: var(--info-bg);
+  color: var(--info-txt);
+  border: 1px solid var(--info-bdr);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-use-event:hover {
+  background: var(--info-txt);
+  color: white;
+}

@@ -506,3 +506,131 @@ function setStep(n) {
     if (dot) dot.textContent = i < n ? '✓' : i;
   }
 }
+
+// ── Mode selector ───────────────────────────────────
+function setMode(mode) {
+  const calendarPicker = document.getElementById('calendar-picker');
+  const manualForm     = document.getElementById('manual-form');
+  const btnCalendar    = document.getElementById('btn-mode-calendar');
+  const btnManual      = document.getElementById('btn-mode-manual');
+
+  if (mode === 'calendar') {
+    btnCalendar.classList.add('active');
+    btnManual.classList.remove('active');
+    calendarPicker.style.display = 'block';
+    manualForm.style.display = 'none';
+    fetchCalendarEvents();
+  } else {
+    btnManual.classList.add('active');
+    btnCalendar.classList.remove('active');
+    manualForm.style.display = 'block';
+    calendarPicker.style.display = 'none';
+  }
+}
+
+// ── Fetch calendar events via MCP ───────────────────
+async function fetchCalendarEvents() {
+  const loadingCard = document.getElementById('calendar-loading-card');
+  const eventList   = document.getElementById('event-list');
+  loadingCard.style.display = 'block';
+  eventList.innerHTML = '';
+
+  try {
+    const data = await callClaude({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      mcp_servers: [
+        {
+          type: 'url',
+          url: 'https://gcal.mcp.claude.com/mcp',
+          name: 'google-calendar',
+        }
+      ],
+      messages: [{
+        role: 'user',
+        content: `List my upcoming calendar events for the next 7 days.
+Return ONLY valid JSON — no markdown, no explanation:
+{
+  "events": [
+    {
+      "id": "unique_id",
+      "title": "Event title",
+      "start": "ISO 8601 datetime",
+      "end": "ISO 8601 datetime",
+      "attendees": "comma separated names or emails",
+      "description": "event description or agenda if present, else empty string"
+    }
+  ]
+}`
+      }],
+    });
+
+    const text   = getTextFromResponse(data).replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(text);
+    const events = parsed.events || [];
+
+    loadingCard.style.display = 'none';
+
+    if (events.length === 0) {
+      eventList.innerHTML = '<p class="no-items">No upcoming events found in the next 7 days.</p>';
+      return;
+    }
+
+    events.forEach(ev => eventList.appendChild(makeEventCard(ev)));
+
+  } catch (err) {
+    loadingCard.style.display = 'none';
+    eventList.innerHTML = `<div class="error-msg">
+      Could not fetch calendar events: ${err.message}
+    </div>`;
+  }
+}
+
+// ── Render a calendar event card ────────────────────
+function makeEventCard(ev) {
+  const div = document.createElement('div');
+  div.className = 'event-card';
+
+  const start    = new Date(ev.start);
+  const dateStr  = start.toLocaleDateString('en-CA', {
+    weekday: 'short', month: 'short', day: 'numeric'
+  });
+  const timeStr  = start.toLocaleTimeString('en-CA', {
+    hour: 'numeric', minute: '2-digit'
+  });
+  const attCount = ev.attendees
+    ? ev.attendees.split(',').filter(a => a.trim()).length
+    : 0;
+
+  div.innerHTML = `
+    <div class="event-meta">
+      <div class="event-title">${ev.title}</div>
+      <div class="event-detail">
+        ${dateStr} · ${timeStr}
+        ${attCount > 0 ? ' · ' + attCount + ' attendee' + (attCount !== 1 ? 's' : '') : ''}
+      </div>
+    </div>
+    <button class="btn-use-event"
+            onclick="selectCalendarEvent(${JSON.stringify(ev).replace(/"/g, '&quot;')})">
+      Use this meeting
+    </button>`;
+  return div;
+}
+
+// ── Populate form from selected calendar event ──────
+function selectCalendarEvent(ev) {
+  setMode('manual');
+
+  document.getElementById('f-title').value     = ev.title || '';
+  document.getElementById('f-datetime').value  = ev.start
+    ? ev.start.slice(0, 16) : '';
+  document.getElementById('f-attendees').value = ev.attendees || '';
+  document.getElementById('f-agenda').value    = ev.description || '';
+
+  document.getElementById('manual-form').scrollIntoView({
+    behavior: 'smooth', block: 'start'
+  });
+}
+
+// ── Initialise default mode on page load ───────────
+setMode('manual');

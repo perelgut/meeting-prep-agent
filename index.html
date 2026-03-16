@@ -50,6 +50,28 @@
 
     <section id="section-details">
 
+      <div class="mode-selector">
+        <button class="mode-btn active" id="btn-mode-calendar"
+                onclick="setMode('calendar')">
+          📅 From Google Calendar
+        </button>
+        <button class="mode-btn" id="btn-mode-manual"
+                onclick="setMode('manual')">
+          ✏️ Enter manually
+        </button>
+      </div>
+
+      <div id="calendar-picker" style="display:none">
+        <div class="card" id="calendar-loading-card">
+          <div class="synth-loading">
+            <div class="spinner"></div>
+            <span>Fetching your upcoming events…</span>
+          </div>
+        </div>
+        <div id="event-list"></div>
+      </div>
+
+      <div id="manual-form" style="display:none">
       <div class="card">
         <p class="card-label">Meeting details</p>
         <div class="form-grid">
