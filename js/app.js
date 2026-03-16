@@ -210,6 +210,7 @@ function renderTopicCards() {
 }
 
 function makeTopicCard(t, isPostponed = false) {
+  const prefix = isPostponed ? 'post-' : '';
   const div = document.createElement('div');
   div.className = 'topic-card';
   div.id = 'card-' + t.id;
@@ -232,27 +233,27 @@ function makeTopicCard(t, isPostponed = false) {
           <span class="card-title">${t.label}</span>
         </div>
         <p class="card-rationale">${t.rationale}</p>
-        <div class="card-actions" id="actions-${t.id}">
-          <button class="action-btn inv" onclick="investigateTopic('${t.id}')">Investigate now</button>
-          <button class="action-btn dis" onclick="discardTopic('${t.id}')">Not a match</button>
-          <button class="action-btn pst" onclick="${isPostponed ? 'skipTopic' : 'postponeTopic'}('${t.id}')">Postpone</button>
+       <div class="card-actions" id="actions-${prefix}${t.id}">
+          <button class="action-btn inv" onclick="investigateTopic('${t.id}','${prefix}')">Investigate now</button>
+          <button class="action-btn dis" onclick="discardTopic('${t.id}','${prefix}')">Not a match</button>
+          <button class="action-btn pst" onclick="${isPostponed ? 'skipTopic' : 'postponeTopic'}('${t.id}','${prefix}')">Postpone</button>
         </div>
-        <div class="inv-loading" id="loading-${t.id}" style="display:none">
+        <div class="inv-loading" id="loading-${prefix}${t.id}" style="display:none">
           <div class="spinner"></div><span>Researching…</span>
         </div>
-        <div class="result-box" id="result-${t.id}"></div>
+        <div class="result-box" id="result-${prefix}${t.id}"></div>
       </div>
-      <span class="status-pill hidden" id="pill-${t.id}"></span>
+      <span class="status-pill hidden" id="pill-${prefix}${t.id}"></span>
     </div>`;
   return div;
 }
 
 // ── Investigate a topic ─────────────────────────────
-async function investigateTopic(id) {
+async function investigateTopic(id, prefix = '') {
   const topic = state.topics.find(t => t.id === id);
-  hideActions(id);
-  showLoading(id);
-  setPill(id, 'Researching…', 'pill-prog');
+  hideActions(prefix + id);
+  showLoading(prefix + id);
+  setPill(prefix + id, 'Researching…', 'pill-prog');
 
 const attendeeNote = topic.type === 'attendee'
     ? `\nIf researching a person, first confirm whether they are currently alive and in their stated role. If the person is deceased, state this clearly as the first sentence and note when they died. Do not present a deceased person as a current meeting participant.\n`
@@ -276,33 +277,35 @@ available. Do not use generic filler.`;
 
     const summary = getTextFromResponse(data);
 
-    showResult(id, summary);
-    setPill(id, 'Investigated', 'pill-done');
+    showResult(prefix + id, summary);
+    setPill(prefix + id, 'Investigated', 'pill-done');
     state.results.push({ type: topic.type, label: topic.label, summary });
     markTopicDone(id, 'complete');
 
   } catch (err) {
-    showResult(id, 'Research failed: ' + err.message);
-    setPill(id, 'Error', 'pill-block');
+    showResult(prefix + id, 'Research failed: ' + err.message);
+    setPill(prefix + id, 'Error', 'pill-block');
     markTopicDone(id, 'error');
   }
 }
 
 // ── Discard / postpone / skip ───────────────────────
-function discardTopic(id) {
-  hideActions(id);
-  setPill(id, 'Not a match', 'pill-muted');
+function discardTopic(id, prefix = '') {
+  hideActions(prefix + id);
+  setPill(prefix + id, 'Not a match', 'pill-muted');
   markTopicDone(id, 'discarded');
 }
-function postponeTopic(id) {
-  hideActions(id);
-  setPill(id, 'Postponed', 'pill-warn');
+
+function postponeTopic(id, prefix = '') {
+  hideActions(prefix + id);
+  setPill(prefix + id, 'Postponed', 'pill-warn');
   state.postponed.push(id);
   markTopicDone(id, 'postponed');
 }
-function skipTopic(id) {
-  hideActions(id);
-  setPill(id, 'Skipped', 'pill-muted');
+
+function skipTopic(id, prefix = '') {
+  hideActions(prefix + id);
+  setPill(prefix + id, 'Skipped', 'pill-muted');
   markTopicDone(id, 'skipped');
 }
 
@@ -340,7 +343,7 @@ function showPostponedRound(ids) {
     if (!topic) return;
     topic._outcome = null;
     const card = makeTopicCard(topic, true);
-    card.id = 'card-' + id;
+    card.id = 'card-post-' + id;
     list.appendChild(card);
   });
   state.postponed = [];
@@ -436,7 +439,12 @@ Return ONLY valid JSON — no markdown, no explanation:
 }
 
 Be specific. Use names, dates, and figures from the research results.
-Do not use generic filler. Each bullet should be a complete, useful sentence.
+Do not use generic filler.
+Write 2–6 bullets per section. Each bullet can be 1–5 sentences long — use
+as many sentences as the point requires to be genuinely useful. Do not pad
+short points and do not truncate important ones. A well-researched section
+may warrant more bullets or longer ones. The goal is a professional briefing
+that reads naturally, not a uniform grid of single sentences.
 Do not reference or quote the private context.`;
 
   try {
