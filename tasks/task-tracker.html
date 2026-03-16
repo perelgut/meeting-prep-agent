@@ -381,14 +381,15 @@ Value: (found in Cloudflare dashboard right sidebar — a 32-char hex string)</p
       {
         id: "p2-t2", title: "Create .github/workflows/deploy-worker.yml",
         file: ".github/workflows/deploy-worker.yml", dep: "p0-t6",
-        detail: `<p>This GitHub Actions workflow automatically deploys your Cloudflare Worker every time you push changes to the <code>main</code> branch.</p>
-<p>Create the file <code>deploy-worker.yml</code> inside <code>.github/workflows/</code> and paste:</p>
+        detail: `<p>This GitHub Actions workflow automatically deploys your Cloudflare Worker every time you push to <code>main</code>.</p>
+<p><strong>Important:</strong> Do NOT include a "Set Worker Secret" step — it causes the workflow to hang indefinitely. Set the ANTHROPIC_API_KEY manually in the Cloudflare dashboard instead (see Task p2-t3).</p>
+<p>Create <code>deploy-worker.yml</code> inside <code>.github/workflows/</code> and paste:</p>
 <pre>name: Deploy Cloudflare Worker
 
 on:
   push:
     branches: [main]
-    paths: ['worker/**']
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -401,28 +402,27 @@ jobs:
         with:
           apiToken: \${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy worker/proxy.js --name meeting-prep-proxy --compatibility-date 2024-01-01
-
-      - name: Set Worker Secret
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: \${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: secret put ANTHROPIC_API_KEY --name meeting-prep-proxy
-        env:
-          ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}</pre>`
+          command: deploy worker/proxy.js --name meeting-prep-proxy --compatibility-date 2024-01-01</pre>
+<p>The <code>workflow_dispatch</code> trigger lets you run this manually from the GitHub Actions tab — useful if you need to redeploy without making a commit.</p>`
       },
       {
-        id: "p2-t3", title: "Commit, push, and verify Worker deployment",
+        id: "p2-t3", title: "Commit, push, verify Worker deployment, and set API key secret",
         file: null, dep: "p2-t2",
         detail: `<ol>
 <li>Save both files in VS Code.</li>
-<li>In GitHub Desktop: commit with message <code>Add Cloudflare Worker proxy and deployment workflow</code>.</li>
-<li>Push to main.</li>
+<li>Commit with message <code>Add Cloudflare Worker proxy and deployment workflow</code> and push to main.</li>
 <li>On GitHub: click the <strong>Actions</strong> tab. You should see <strong>Deploy Cloudflare Worker</strong> running.</li>
 <li>Wait for it to show a green checkmark. If it fails, click the run to see the error log.</li>
-<li>Go to <a href="https://dash.cloudflare.com" target="_blank">dash.cloudflare.com</a> → <strong>Workers &amp; Pages</strong>. You should see <code>meeting-prep-proxy</code> listed.</li>
-<li>Note your Worker URL — it will look like: <code>https://meeting-prep-proxy.YOUR-SUBDOMAIN.workers.dev</code><br>You will need this URL in Phase 3.</li>
+<li>Go to <a href="https://dash.cloudflare.com" target="_blank">dash.cloudflare.com</a>. You should now see <code>meeting-prep-proxy</code> in the Workers &amp; Pages section.</li>
+<li>Click on <code>meeting-prep-proxy</code> → click the <strong>Settings</strong> tab.</li>
+<li>Under <strong>Variables &amp; Secrets</strong>, add a new secret:<br>
+   — Name: <code>ANTHROPIC_API_KEY</code><br>
+   — Value: your Anthropic API key (sk-ant-...)<br>
+   — Type: <strong>Secret</strong> (not Plaintext)<br>
+   — Save.</li>
+<li>Note your Worker URL from the Settings → Domains &amp; Routes section. It will look like:<br>
+   <code>https://XXXXXXXX-meeting-prep-proxy.YOUR-SUBDOMAIN.workers.dev</code><br>
+   Note: the URL includes a hex prefix before the Worker name. Copy the full URL including the prefix.</li>
 </ol>`
       }
     ]

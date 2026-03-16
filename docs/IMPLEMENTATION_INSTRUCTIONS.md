@@ -2,7 +2,7 @@
 
 **Document:** Step-by-step implementation guide  
 **Companion:** `tasks/task-tracker.html` — open in browser to track progress  
-**Last Updated:** Session 2, Entry 033
+**Last Updated:** Session 2, Entry 107 — Live testing corrections applied: Worker URL hex prefix, manual secret setting, AI quality note, Git terminal workflow
 
 ---
 
@@ -424,13 +424,21 @@ inconsistency and makes redesigns straightforward.
 This is the simplest file. It has one job: send a request to your
 Cloudflare Worker and return the response.
 
+**Important:** The Worker URL includes a hex version prefix that
+Cloudflare adds automatically. The URL format is:
+`https://XXXXXXXX-meeting-prep-proxy.YOUR-SUBDOMAIN.workers.dev`
+
+Find your exact URL in the Cloudflare dashboard: click on
+`meeting-prep-proxy` → Settings → Domains & Routes.
+
 ```javascript
 // ─────────────────────────────────────────────────────
 // api.js — all Anthropic API calls go through here
-// Replace YOUR-WORKER-URL with your actual Worker URL
+// Replace the WORKER_URL with your actual Worker URL
+// found in Cloudflare dashboard → meeting-prep-proxy → Settings
 // ─────────────────────────────────────────────────────
 
-const WORKER_URL = 'https://meeting-prep-proxy.YOUR-SUBDOMAIN.workers.dev';
+const WORKER_URL = 'https://XXXXXXXX-meeting-prep-proxy.YOUR-SUBDOMAIN.workers.dev';
 
 async function callClaude(payload) {
   const response = await fetch(WORKER_URL, {
@@ -447,11 +455,6 @@ async function callClaude(payload) {
   return response.json();
 }
 ```
-
-**Teaching point:** `callClaude()` takes the same payload you would send
-directly to `api.anthropic.com/v1/messages`. The Worker adds the API key
-before forwarding it. From the JavaScript's perspective, it is calling
-a URL that returns an Anthropic response — the security layer is invisible.
 
 ### 4.2 js/app.js — state and Phase 1
 
@@ -1046,13 +1049,10 @@ async function downloadDocx() {
 Every time you finish a meaningful piece of work:
 
 1. Save all changed files in VS Code (`Ctrl+S` / `Cmd+S`)
-2. Open GitHub Desktop
-3. Review the list of changed files — confirm they are what you expect
-4. Type a short, descriptive commit message (e.g. `Add Phase 2 research queue`)
-5. Click **Commit to main**
-6. Click **Push origin**
-7. Go to your repository on GitHub → **Actions** tab
-8. Watch the deployment workflows complete (green checkmark = success)
+2. In the VS Code terminal: `git add .` → `git commit -m "message"` → `git push`
+   (or use GitHub Desktop — see Appendix A Section 5)
+3. Go to your repository on GitHub → **Actions** tab
+4. Watch both deployment workflows complete (green checkmark = success)
 
 ### 5.2 If a workflow fails
 
@@ -1060,20 +1060,44 @@ Every time you finish a meaningful piece of work:
 2. Click the failed job to expand it
 3. Read the error message — it is usually specific
 4. Common causes:
-   - Secret name spelled wrong (must match exactly)
+   - Secret name spelled wrong (must match exactly, including capitalisation)
    - Cloudflare Account ID incorrect
-   - Syntax error in a workflow YAML file (indentation matters)
+   - Syntax error in a workflow YAML file (indentation matters in YAML —
+     use spaces, never tabs)
 5. Fix the issue, commit, push — the workflow runs again automatically
 
-### 5.3 Testing locally before pushing
+### 5.3 The ANTHROPIC_API_KEY must be set manually in Cloudflare
+
+**This is not set automatically by the workflow.** After the Worker is
+first deployed (Phase 2), you must add the API key manually:
+
+1. Go to **https://dash.cloudflare.com**
+2. Click on `meeting-prep-proxy` in the Workers & Pages section
+3. Click the **Settings** tab
+4. Under **Variables & Secrets**, add:
+   - Name: `ANTHROPIC_API_KEY`
+   - Value: your Anthropic API key (sk-ant-...)
+   - Type: **Secret** (not Plaintext)
+5. Save
+
+This only needs to be done once. The secret persists permanently in
+Cloudflare and is not affected by subsequent Worker deployments.
+
+### 5.4 Your Worker URL has a hex prefix
+
+The Worker URL is NOT simply `https://meeting-prep-proxy.SUBDOMAIN.workers.dev`.
+Cloudflare adds a version hex prefix, making it:
+`https://XXXXXXXX-meeting-prep-proxy.SUBDOMAIN.workers.dev`
+
+Find your exact URL in: Cloudflare dashboard → click `meeting-prep-proxy`
+→ Settings → Domains & Routes. Copy the full URL including the hex prefix
+and paste it into `js/api.js` as the `WORKER_URL` value.
+
+### 5.5 Testing locally before pushing
 
 You can open `index.html` directly in your browser to check the visual
 layout. However, the API calls will not work locally because the Worker
-URL only responds to requests from your GitHub Pages domain.
-
-For local API testing, temporarily replace `WORKER_URL` in `js/api.js`
-with your full Worker URL — it will accept requests from anywhere during
-development. Remember to revert before the final push.
+URL only responds to requests from your deployed GitHub Pages domain.
 
 ---
 
@@ -1110,6 +1134,22 @@ Your application is complete when all of the following are true:
 7. The application works in Chrome, Firefox, and Safari
 8. The Anthropic API key is not visible anywhere in the source code
    or in the browser Developer Tools network panel
+
+### A note on AI research quality
+
+The application performs real research using Claude and live web search.
+**Always review every result before using it.** Known limitations observed
+during testing:
+
+- The agent may research a named attendee without noting they are deceased.
+  Always verify that attendees are current, active individuals before
+  presenting the briefing.
+- Research results reflect what Claude finds via web search — they may be
+  incomplete, out of date, or missing critical context.
+- The human-in-the-loop design (reviewing each "Investigate now" result)
+  exists precisely to catch these errors before they reach the briefing.
+
+The agent is a research assistant, not a replacement for human judgement.
 
 ---
 
