@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────
 
 // ── Google OAuth configuration ──────────────────────
-const GOOGLE_CLIENT_ID = 'YOUR-CLIENT-ID.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '132688114703-8tgc8pbql5ci4rt8jmkahj145hbk2atr.apps.googleusercontent.com';
 
 // ── API response utility ────────────────────────────
 function getTextFromResponse(data) {
