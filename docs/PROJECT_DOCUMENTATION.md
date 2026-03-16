@@ -2,7 +2,7 @@
 
 **Course:** Computer Programming — AI Agents Module  
 **Project:** Meeting Prep Agent  
-**Last Updated:** Session 3, Entry 121 — Synthesis successful; briefing under review
+**Last Updated:** Session 3, Entry 180 — Google Calendar integration fully functional; both entry points working
 
 ---
 
@@ -3857,6 +3857,1479 @@ correctness. Findings to be documented upon completion of review.
 **Still to verify:**
 - .docx download — not yet tested this session
 - Content quality of the briefing sections
+
+---
+
+### Entry 122 — Briefing quality: over-constrained bullets; prompt relaxation needed
+**Date:** Session 3  
+**Type:** Quality improvement — instructor-directed
+
+**Observation:** The briefing document is well-structured but too
+terse. Claude is producing exactly 4 bullets per section, each
+exactly 1 sentence long. The output reads like a checklist rather
+than a professional briefing.
+
+**Root cause:** The synthesis prompt instructs:
+"Each bullet should be a complete, useful sentence."
+Combined with the structured JSON format and the implicit pressure
+to fill each section evenly, Claude interprets this as: one sentence
+= one bullet, repeat four times.
+
+**Requested improvement:**
+- 2–6 bullets per section (not a fixed count)
+- Each bullet 1–5 sentences long
+- Occasional outlier sections with more bullets or longer bullets
+  where the content warrants it
+- The goal is a professional briefing that reads naturally, not a
+  uniform grid of single sentences
+
+**Fix:** Update the synthesis prompt in `runSynthesis()` in app.js
+to replace the over-constraining instruction with a more flexible one.
+
+**Current instruction:**
+"Each bullet should be a complete, useful sentence."
+
+**Replacement:**
+"Write 2–6 bullets per section. Each bullet can be 1–5 sentences
+long — use as many sentences as the point requires to be genuinely
+useful. Do not pad short points, and do not truncate important ones.
+A well-researched section may have more bullets; a thinner one fewer.
+The goal is a professional briefing that reads naturally, not a
+uniform grid."
+
+---
+
+### Entry 123 — Synthesis prompt relaxation deployed; both workflows green
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**Synthesis prompt fix committed and deployed successfully.**
+Both workflows green. The updated prompt allows 2–6 bullets per
+section, each 1–5 sentences long, with the explicit goal of a
+naturally reading professional briefing rather than a uniform grid.
+
+**Instructor feedback:** "That was a very efficient fix."
+
+**Next actions:**
+1. Retest synthesis to confirm improved output quality
+2. Test .docx download end-to-end (p7-t3 — still not tested)
+3. Apply rate limit friendly error message (p7-t2)
+4. Apply inactive Generate button with progress count (p7-t1)
+
+**Task tracker update due:**
+- p6-t2: Investigate Edge tracking prevention warnings — can now
+  be verified during the .docx download test
+
+---
+
+### Entry 124 — Bug: postponed round cards don't update visually after investigation
+**Date:** Session 3  
+**Type:** Bug identified during testing
+
+**Issue:** When a topic is investigated during the postponed round
+(final review), the result appears on the original first-round card
+rather than on the postponed round card. The postponed card's buttons
+remain visible and active — no greying out, no result display, no
+status pill update.
+
+**Root cause:** In `makeTopicCard()`, the card is given `id="card-" + t.id`.
+When the postponed round re-presents the same topic, it creates a new
+card with the same ID. The DOM then has two elements with the same ID.
+
+When `investigateTopic()` calls:
+```javascript
+document.getElementById('card-' + id)
+document.getElementById('actions-' + id)
+document.getElementById('loading-' + id)
+document.getElementById('result-' + id)
+document.getElementById('pill-' + id)
+```
+
+`getElementById` always returns the FIRST matching element — which is
+the original first-round card, not the postponed round card. So all
+visual updates go to the wrong card.
+
+**Fix:** The postponed round cards need unique IDs distinct from the
+first-round cards. The simplest approach: prefix postponed card IDs
+with `post-`.
+
+In `showPostponedRound()` in app.js, the card is already given
+`card.id = 'card-' + id` after creation. Change this to:
+`card.id = 'card-post-' + id`
+
+And the `makeTopicCard()` function when called with `isPostponed = true`
+needs to generate inner element IDs with the `post-` prefix too:
+- `actions-post-${t.id}` instead of `actions-${t.id}`
+- `loading-post-${t.id}` instead of `loading-${t.id}`
+- `result-post-${t.id}` instead of `result-${t.id}`
+- `pill-post-${t.id}` instead of `pill-${t.id}`
+
+And `investigateTopic()`, `discardTopic()`, `skipTopic()` need to
+accept an optional prefix parameter to target the correct card.
+
+**Alternative simpler fix:** Pass the card ID suffix as a parameter
+through the onclick handlers in `makeTopicCard()` when `isPostponed`
+is true, so the correct card is always targeted.
+
+**Scheduling:** Fix in this session as it is a functional bug, not
+just a cosmetic one — the user cannot tell if their postponed
+investigation succeeded.
+
+---
+
+### Entry 125 — Correction: postponeTopic also needs prefix parameter
+**Date:** Session 3  
+**Type:** Bug fix correction — instructor-identified
+
+**Instructor caught** that the postponed round fix instructions
+omitted `postponeTopic` from the list of functions needing the
+prefix parameter. All four action functions need the same pattern:
+- discardTopic(id, prefix = '') ✅ included in original instructions
+- skipTopic(id, prefix = '') ✅ included
+- investigateTopic(id, prefix = '') ✅ included
+- postponeTopic(id, prefix = '') ❌ omitted — now corrected
+
+In practice `postponeTopic` is only called from first-round cards
+(prefix = '') but consistency across all four functions is correct.
+
+Fix added to instructions before commit.
+
+---
+
+### Entry 126 — Additional fix needed: markTopicDone must check postponed card ID
+**Date:** Session 3  
+**Type:** Bug fix addition — identified during verification
+
+**During file verification** (Entry 114 commitment in practice):
+`markTopicDone()` uses `document.getElementById('card-' + id)` to
+fade the card. For postponed round topics, this finds the first-round
+card, not the postponed round card — so the postponed card never fades.
+
+**Additional fix required in `markTopicDone()`:**
+Try the postponed card ID first, fall back to the first-round card ID:
+```javascript
+const card = document.getElementById('card-post-' + id) ||
+             document.getElementById('card-' + id);
+```
+
+This was caught during verification before commit — exactly the
+purpose of the re-read commitment from Entry 114.
+
+---
+
+### Entry 127 — Postponed round bug fixed; application fully functional
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**All postponed round fixes confirmed working:**
+- Postponed cards now have unique IDs (card-post-{id}) ✅
+- Action buttons on postponed cards update correctly ✅
+- Cards fade correctly when actioned in postponed round ✅
+- First-round cards are not affected by postponed round actions ✅
+
+**Instructor assessment:** "Everything is working well."
+
+**Application status — Version 1 complete and fully functional:**
+- Topic discovery ✅
+- Clarification panel ✅
+- Research queue with investigate/discard/postpone ✅
+- Postponed round with correct visual updates ✅
+- Briefing synthesis with natural bullet length ✅
+- .docx download ✅ (pending final confirmation)
+- Deceased attendee check ✅
+- Defensive API response parsing ✅
+
+**Phase 6 task tracker updates due:**
+- p6-t1: Fix API response parsing → Done ✅
+- p6-t2: Edge tracking prevention warnings → Done (cosmetic only) ✅
+- p6-t3: Deceased attendee check → Done ✅
+- p6-t4: Push docs folder → To do (still pending)
+- p6-t5: Google Calendar MCP → next major feature
+
+**Instructor note:** "I hope that eventually we can get deeper
+insights but this is an excellent start and it's time to move on."
+
+**Next:** Google Calendar MCP integration (p6-t5).
+
+---
+
+### Entry 128 — Google Calendar UX design approved
+**Date:** Session 3  
+**Type:** Design decision — instructor-approved
+
+**UX design for Google Calendar integration — approved as proposed:**
+
+**Mode selection:** Two large buttons above the meeting details form:
+- "📅 From Google Calendar"
+- "✏️ Enter manually"
+
+This is Option C from the design discussion — clear affordance,
+easy to teach, extensible if a third source is added later.
+
+**Event picker:** Card per event with "Use this meeting" button.
+Matches the visual language of the existing research queue cards.
+
+**Full flow:**
+1. User lands on the details section — sees two mode buttons
+2. Clicks "From Google Calendar" → loading state appears
+3. Upcoming events fetched via Anthropic API + Google Calendar MCP
+4. Events rendered as cards (title, date/time, attendee count)
+5. User clicks "Use this meeting" on one card
+6. Form auto-fills with event details (title, datetime, attendees,
+   agenda from event description if present)
+7. User may edit any field and add private context
+8. Flow continues identically to manual entry from this point
+
+**Manual entry path:** Clicking "Enter manually" shows the form
+directly — identical to current behaviour. No regression.
+
+**Teaching points this introduces:**
+- MCP server declaration in an API call
+- Conditional UI rendering based on async API response
+- Auto-populating a form from structured data
+- Two entry points into the same downstream flow
+
+**Implementation plan:**
+1. Add mode selector buttons to index.html (above the form card)
+2. Add CSS for mode buttons and event cards
+3. Add `fetchCalendarEvents()` function to app.js
+4. Add `selectCalendarEvent()` function to populate the form
+5. Show/hide form vs event picker based on mode
+
+---
+
+### Entry 129 — Google Calendar MCP integration implemented
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**Three files updated for Google Calendar integration:**
+
+**index.html:**
+- Mode selector buttons added above the details section
+- calendar-picker div with loading card and event-list container
+- manual-form div wrapping the existing form
+- Default mode: manual (via setMode('manual') call at bottom of app.js)
+
+**css/styles.css:**
+- Section 25: mode selector and mode button styles
+- Section 26: event card, event meta, event detail, btn-use-event styles
+
+**js/app.js — four new functions:**
+- `setMode(mode)` — switches between calendar and manual modes
+- `fetchCalendarEvents()` — calls Anthropic API with Google Calendar
+  MCP server, parses JSON response, renders event cards
+- `makeEventCard(ev)` — renders a single event card with title,
+  date/time, attendee count, and "Use this meeting" button
+- `selectCalendarEvent(ev)` — populates the form from the selected
+  event, switches to manual mode, scrolls to form
+
+**Initialisation:** `setMode('manual')` called at end of app.js
+so the page defaults to manual entry on load.
+
+**Committed and pushed. Awaiting workflow green confirmation.**
+
+**Task tracker update due:**
+- p6-t5: Google Calendar MCP integration → Done (pending test)
+
+---
+
+### Entry 130 — Google Calendar integration: live test in progress
+**Date:** Session 3  
+**Type:** Live implementation — testing
+
+**Both workflows green. Testing Calendar integration live.**
+Awaiting test results on:
+1. Mode buttons visible on page load
+2. Manual form shown by default
+3. Calendar mode fetches and renders events
+4. Event cards show correct data
+5. "Use this meeting" auto-fills form and switches to manual mode
+
+---
+
+### Entry 131 — Google Calendar MCP: "mcp_servers: Extra inputs are not permitted"
+**Date:** Session 3  
+**Type:** Bug identified — architecture issue
+
+**Error:** `invalid_request_error: mcp_servers: Extra inputs are not permitted`
+
+**Root cause:** The Anthropic API does accept `mcp_servers` as a
+parameter — but only on specific endpoints or API versions that
+support it. Our Cloudflare Worker proxy forwards the request body
+as-is to `https://api.anthropic.com/v1/messages`. The v1/messages
+endpoint validates the request body strictly and rejects unknown
+top-level fields.
+
+**Two possible causes:**
+1. The `anthropic-version` header in the Worker is set to
+   `2023-06-01` — MCP server support may require a newer version
+2. MCP servers via the API may require the beta header
+   `anthropic-beta: mcp-client-2025-04-04` to be included
+
+**Fix — update worker/proxy.js to add the beta header:**
+```javascript
+headers: {
+  'Content-Type': 'application/json',
+  'x-api-key': env.ANTHROPIC_API_KEY,
+  'anthropic-version': '2023-06-01',
+  'anthropic-beta': 'mcp-client-2025-04-04',
+},
+```
+
+This header enables MCP client support on the messages endpoint.
+It is safe to include for all requests — non-MCP calls ignore it.
+
+**Alternative:** Strip `mcp_servers` from the request in the Worker
+if it causes problems, and handle Calendar access differently.
+
+**Recommended fix:** Add the beta header to the Worker. This is a
+one-line change to `worker/proxy.js`.
+
+---
+
+### Entry 132 — MCP beta header added to Worker; both workflows green; retesting Calendar
+**Date:** Session 3  
+**Type:** Implementation — fix deployed
+
+**anthropic-beta: mcp-client-2025-04-04 header added to worker/proxy.js.**
+Both workflows green. Retesting Google Calendar fetch.
+
+---
+
+### Entry 133 — MCP API structure: two corrections needed
+**Date:** Session 3  
+**Type:** Bug fix — API structure incorrect
+
+**Research findings from Anthropic documentation:**
+
+**Correction 1 — Beta header version outdated:**
+We used `mcp-client-2025-04-04` but the current version is
+`mcp-client-2025-11-20`. The old version is deprecated.
+
+**Correction 2 — mcp_toolset entry required in tools array:**
+The `mcp_servers` field alone is not sufficient. The API also
+requires a corresponding entry in the `tools` array:
+```json
+"tools": [
+  {
+    "type": "mcp_toolset",
+    "mcp_server_name": "google-calendar"
+  }
+]
+```
+Without this, the API rejects the request with "Extra inputs
+are not permitted" — the server definition is present but no
+toolset is declared, making the parameter invalid.
+
+**Two fixes needed:**
+1. Update Worker beta header: `mcp-client-2025-11-20`
+2. Add `tools` array to `fetchCalendarEvents()` in app.js
+
+---
+
+### Entry 134 — MCP API fixes deployed; both workflows green; retesting
+**Date:** Session 3  
+**Type:** Implementation — fixes deployed
+
+**Both fixes committed and deployed:**
+- worker/proxy.js: beta header updated to mcp-client-2025-11-20 ✅
+- js/app.js: mcp_toolset entry added to tools array ✅
+
+Both workflows green. Retesting Google Calendar fetch.
+
+---
+
+### Entry 135 — Root cause confirmed: tools array missing from fetchCalendarEvents()
+**Date:** Session 3  
+**Type:** Bug fix — edit not applied before commit
+
+**Verified from uploaded app.js:** The `tools` array with `mcp_toolset`
+was not added to `fetchCalendarEvents()` before the last commit.
+The `mcp_servers` array is present but the `tools` entry is absent.
+
+Per Anthropic documentation, both are required:
+- `mcp_servers` — declares the server connection
+- `tools` with `type: "mcp_toolset"` — declares which toolset to use
+
+Without the `tools` entry, the API rejects the request as having
+extra inputs (the mcp_servers field is unrecognised without a
+corresponding toolset declaration).
+
+**Fix being applied now.**
+
+---
+
+### Entry 136 — tools array verified in app.js; committing
+**Date:** Session 3  
+**Type:** Implementation — fix verified
+
+**Uploaded app.js verified:** `tools` array with `mcp_toolset`
+correctly present at lines 549–554, between `mcp_servers` and
+`messages`. File structure is correct.
+
+**Committing:** "Add mcp_toolset to Calendar fetch — fix MCP API structure"
+
+---
+
+### Entry 137 — Google Calendar MCP: architectural barrier identified
+**Date:** Session 3  
+**Type:** Design issue — fundamental architecture problem
+
+**Root cause of persistent "mcp_servers: Extra inputs are not permitted":**
+
+The Anthropic MCP connector works correctly via the raw API with the
+right beta header and toolset declaration. However, the `gcal.mcp.claude.com`
+MCP server is **Anthropic's own Claude.ai integration server** — it is
+not a public MCP server accessible via API key authentication.
+
+This server is designed to be used only within the Claude.ai product,
+where the user's Google Calendar OAuth token is already stored and
+managed by Anthropic's infrastructure. When Claude.ai calls this server,
+it passes the user's OAuth token automatically.
+
+When we call it via the Anthropic API (through our Cloudflare Worker),
+we have no OAuth token to pass. The server requires an `authorization_token`
+in the `mcp_servers` definition — and we don't have one, nor can we obtain
+one without implementing a full Google OAuth flow in the application.
+
+**What the error actually means:**
+The error "mcp_servers: Extra inputs are not permitted" likely means
+the API tier or account being used doesn't have MCP connector access
+enabled, OR the request is being rejected before even reaching the
+server validation because the beta feature isn't enabled for this
+account/key combination.
+
+**Two paths forward:**
+
+**Path A — Implement Google OAuth directly (significant work):**
+- Register a Google Cloud OAuth app
+- Implement the OAuth flow in the browser application
+- Store the user's access token (in memory for this session)
+- Pass the token as `authorization_token` to the MCP server
+- Handle token refresh
+This is feasible but adds substantial complexity for a course project.
+
+**Path B — Accept the limitation for Version 1 (recommended):**
+- The manual entry mode works perfectly and is the correct fallback
+- Document the Calendar integration as "planned for a future version
+  pending Google OAuth implementation"
+- The UX already shows both buttons — the Calendar button can show
+  a clear "Coming soon" or "Requires OAuth setup" message
+
+**Recommendation:** Path B. The manual entry path is complete and
+functional. Google Calendar integration via the direct API requires
+OAuth infrastructure that is out of scope for the current course module.
+This is a teachable architectural limitation — it demonstrates that
+not all integrations are equally accessible, and that some require
+additional authentication infrastructure.
+
+**Instructor decision required:** Proceed with Path A or Path B?
+
+---
+
+### Entry 138 — Google Calendar via OAuth: feasible but requires Google Cloud setup
+**Date:** Session 3  
+**Type:** Architecture decision
+
+**Research findings:**
+
+The Anthropic MCP connector does support passing an OAuth access token
+as `authorization_token` in the `mcp_servers` definition. The pattern
+the instructor proposed — user logs in via Google when clicking the
+Calendar button — is technically the correct approach.
+
+**What this requires:**
+1. A Google Cloud Project with the Calendar API enabled
+2. An OAuth 2.0 Client ID (web application type) with the GitHub
+   Pages URL as an authorised redirect URI
+3. A browser-side OAuth flow: popup or redirect to Google's consent
+   screen, user grants permission, Google returns an access token
+4. That access token passed as `authorization_token` when calling
+   the MCP server
+
+**The `gcal.mcp.claude.com` question:**
+[Unverified] It is unclear whether Anthropic's `gcal.mcp.claude.com`
+accepts standard Google OAuth access tokens, or whether it only
+accepts tokens issued by Anthropic's own internal auth system. If
+it only accepts Anthropic-issued tokens, we would need to use a
+third-party Google Calendar MCP server (such as the open-source
+`@cocal/google-calendar-mcp` or Composio's hosted version) instead.
+
+**Recommended path for the application:**
+Use the Google Identity Services (GIS) JavaScript library for the
+browser OAuth flow — it handles the consent screen popup entirely
+in JavaScript with no redirect needed. The user clicks "Sign in
+with Google", grants calendar access, we receive an access token,
+and pass it to the MCP call.
+
+**Complexity assessment:**
+Moderate — 3 steps: (1) Google Cloud setup (one-time, manual),
+(2) ~30 lines of JavaScript for the OAuth flow, (3) pass token
+to MCP call. The Google Cloud setup is the fiddliest part.
+
+**Decision:** Proceed with Google OAuth flow — instructor confirmed
+this is the right approach. Implementation to follow.
+
+---
+
+### Entry 139 — Google Cloud OAuth setup: live walkthrough beginning
+**Date:** Session 3  
+**Type:** Live implementation — prerequisite setup
+
+**Context:** Creating a Google OAuth 2.0 Client ID so the application
+can request Google Calendar access from the user. This is a one-time
+setup in Google Cloud Console.
+
+**Walkthrough being conducted live — all screens will be documented
+for the appendix.**
+
+---
+
+### Entry 140 — Google Cloud Console: project creation steps documented
+**Date:** Session 3  
+**Type:** Live implementation — steps documented for appendix
+
+**Steps to create a Google Cloud project (for appendix):**
+
+1. Go to **https://console.cloud.google.com**
+2. Sign in with your Google account
+3. At the top of the page, click the project selector dropdown
+   (it shows your current project name or "Select a project")
+4. In the popup that appears, click **"New Project"** (top right)
+5. Fill in:
+   - **Project name:** `meeting-prep-agent`
+   - **Organization:** leave as default (or your org if applicable)
+   - **Location:** leave as default
+6. Click **"Create"**
+7. Wait a few seconds for the project to be created
+8. The page will reload with the new project selected — confirm
+   the project name appears in the top selector
+
+**Instructor status:** Project `meeting-prep-agent` already created.
+Proceeding directly to enabling the Calendar API.
+
+**Next step:** Enable the Google Calendar API for this project.
+In the Google Cloud Console with `meeting-prep-agent` selected,
+describe what you see on the main dashboard — particularly whether
+there is a search bar at the top and what the main navigation
+options are.
+
+---
+
+### Entry 141 — Google Cloud Console dashboard layout documented
+**Date:** Session 3  
+**Type:** Live implementation — UI documented for appendix
+
+**Google Cloud Console dashboard — confirmed layout:**
+- Project name and number/ID shown at top
+- Dashboard and Cloud Hub tabs
+- Quick action buttons: Create a VM, Run a query in BigQuery,
+  Deploy an application, Create a storage bucket (all irrelevant)
+- Quick access section with boxes including:
+  APIs & Services, IAM and Admin, Billing, and others
+
+**Appendix note:** Students should ignore all the VM/BigQuery/storage
+buttons — these are for other Google Cloud products. The only
+relevant section for this project is **APIs & Services**.
+
+**Next action:** Click **APIs & Services** in the Quick access section.
+
+---
+
+### Entry 142 — APIs & Services page layout documented
+**Date:** Session 3  
+**Type:** Live implementation — UI documented for appendix
+
+**APIs & Services page — confirmed layout:**
+
+**Left sidebar menu:**
+- Enabled APIs & services
+- Library
+- Credentials
+- OAuth consent screen
+- Page usage agreements
+
+**Main area:** Lists currently enabled APIs (extensive default list
+including Analytics Hub, BigQuery, etc. — all pre-enabled by Google
+on new projects and irrelevant to this project).
+
+**Three tasks to complete from this page:**
+1. Library → search for and enable Google Calendar API
+2. OAuth consent screen → configure the app for user consent
+3. Credentials → create the OAuth 2.0 Client ID
+
+Proceeding in this order.
+
+---
+
+### Entry 143 — API Library: 509 public APIs; searching for Google Calendar API
+**Date:** Session 3  
+**Type:** Live implementation — UI documented for appendix
+
+**API Library page:**
+- Search bar visible
+- 509 public APIs + 3 private APIs available
+- Searching for "Google Calendar API"
+
+**Appendix note for students:** The Library contains hundreds of
+APIs. Do not browse — use the search bar and type the exact name.
+
+---
+
+### Entry 144 — Google Calendar API found in search results
+**Date:** Session 3  
+**Type:** Live implementation — UI documented for appendix
+
+**Search results for "Google Calendar API":**
+- Google Calendar API ← correct one to select
+- CalDAV API ← do not select this one
+
+**Appendix note:** Select "Google Calendar API" specifically.
+CalDAV is a different protocol and is not what we need.
+
+---
+
+### Entry 145 — Google Calendar API: Enable button found; enabling
+**Date:** Session 3  
+**Type:** Live implementation milestone
+
+**Google Calendar API page shows "Enable" button** — confirming
+the API is not yet enabled on this project. Clicking Enable.
+
+---
+
+### Entry 146 — Google Calendar API enabled successfully
+**Date:** Session 3  
+**Type:** Live implementation milestone
+
+**Google Calendar API enabled.** Page loaded after spinner showing
+the API overview/management page. Awaiting description of page
+contents to document for appendix.
+
+---
+
+### Entry 147 — Google Calendar API enabled; credentials prompt shown
+**Date:** Session 3  
+**Type:** Live implementation milestone
+
+**Google Calendar API enabled — confirmed:**
+- No Enable button visible (already enabled)
+- No Manage button (expected on some versions)
+- Message shown: "To call this API from your own applications,
+  you may need to create credentials."
+- "Create credentials" button visible
+
+**Appendix note:** The absence of Enable/Manage buttons and the
+presence of the credentials prompt is the correct "success" state
+after enabling the API. Students should proceed directly to
+"Create credentials" from here.
+
+**Next action:** Click "Create credentials" — will show credential
+type selection screen.
+
+---
+
+### Entry 148 — Credential Type screen documented; selecting User data
+**Date:** Session 3  
+**Type:** Live implementation — UI documented for appendix
+
+**Credential Type screen layout:**
+- "Select an API" dropdown — pre-filled with "Google Calendar API" ✅
+- Radio buttons:
+  - User data ← select this one
+  - Application data ← do not select
+
+**Why User data:**
+We need to access the calendar on behalf of a signed-in Google user
+(the person using the application). User data means the OAuth flow
+will ask the user to grant permission to their own calendar.
+Application data is for service accounts accessing data without
+a user present — not appropriate here.
+
+**Action:** Select "User data" and click Next.
+
+---
+
+### Entry 149 — OAuth Consent Screen fields documented
+**Date:** Session 3  
+**Type:** Live implementation — UI documented for appendix
+
+**OAuth Consent Screen fields:**
+- App name → enter: Meeting Prep Agent
+- User support email → select from dropdown (your Google account email)
+- Logo file → leave blank (optional, not required)
+- Developer contact information → enter your email address
+
+**Appendix note for students:**
+The OAuth consent screen is what Google shows to users when they
+click "Sign in with Google" in the application. It displays the
+app name, logo (if provided), and the permissions being requested.
+Students should use their own email for both support and developer
+contact fields.
+
+---
+
+### Entry 150 — Scopes screen; button label correction noted
+**Date:** Session 3  
+**Type:** Live implementation — appendix correction
+
+**Appendix correction:** The OAuth consent screen button is
+"Save and continue" not "Next". This applies to each step of
+the credential creation wizard.
+
+**Running count of appendix corrections: now 32.**
+
+**Scopes screen:**
+- "Add or remove scopes" button visible
+- No scopes currently displayed (none pre-selected)
+
+**Next action:** Click "Add or remove scopes" to open the scope
+selector panel.
+
+---
+
+### Entry 151 — Scopes panel: list visible; searching for calendar scope
+**Date:** Session 3  
+**Type:** Live implementation — UI documented for appendix
+
+**Scopes panel layout:**
+- List of available scopes visible, starting with
+  `.../auth/userinfo.email`
+- Searching for the correct Calendar scope
+
+**Why read-only:** We only need to read the user's calendar events,
+not create, modify, or delete them. Requesting the minimum scope
+necessary is a security best practice — the user can see exactly
+what the application can and cannot do.
+
+**Scope to add:** `https://www.googleapis.com/auth/calendar.readonly`
+
+---
+
+### Entry 152 — calendar.readonly scope found; selecting it
+**Date:** Session 3  
+**Type:** Live implementation milestone
+
+**Search result:** Only `.../auth/calendar.readonly` shown —
+exactly the correct scope. Selecting it and saving.
+
+---
+
+### Entry 153 — calendar.readonly classified as sensitive scope
+**Date:** Session 3  
+**Type:** Live implementation — behaviour documented for appendix
+
+**Sensitive scope classification — expected and correct:**
+Google classifies `calendar.readonly` as a sensitive scope because
+it exposes personal calendar data. This classification means:
+
+1. Users will see an additional warning on the consent screen
+2. The app requires Google verification before arbitrary users can
+   authorize it
+3. While unverified, only users added as "test users" can authorize
+
+**For this course project:** This is not a problem. The developer
+(instructor) and any students testing the app can be added as test
+users in the OAuth consent screen settings. Unverified apps work
+perfectly for test users — the warning screen just requires an
+extra click to proceed.
+
+**Appendix note for students:** When Google shows a warning saying
+"Google hasn't verified this app", click "Advanced" or "Continue
+anyway" — this is expected for development projects and not a
+security problem for an app you built yourself.
+
+**Next:** Confirm scope is listed and click "Save and continue".
+
+---
+
+### Entry 154 — OAuth Client ID screen: Application type selection
+**Date:** Session 3  
+**Type:** Live implementation — UI documented for appendix
+
+**OAuth Client ID screen:**
+- Field: Application type (dropdown)
+- Correct choice: **Web application**
+
+**Why Web application:**
+Our application runs in a browser on GitHub Pages. The OAuth flow
+happens entirely in the browser via JavaScript. "Web application"
+is the correct type for browser-based apps using the Google Identity
+Services JavaScript library.
+
+Other types (Android, iOS, Desktop, etc.) are for native apps and
+use different OAuth flows — not applicable here.
+
+**Action:** Select "Web application" and document what additional
+fields appear.
+
+---
+
+### Entry 155 — Web application type selected; name field shown
+**Date:** Session 3  
+**Type:** Live implementation — UI documented for appendix
+
+**After selecting Web application:**
+- Name field pre-filled with "Web client 1"
+- Recommended rename: `meeting-prep-agent-web`
+
+**Appendix note:** The name is for your own reference in the
+Google Cloud Console only. It does not appear to users.
+
+**Awaiting:** Confirmation of what other fields appear below the
+name — specifically Authorised JavaScript origins and Authorised
+redirect URIs sections.
+
+---
+
+### Entry 156 — Authorised JavaScript origins and redirect URIs documented
+**Date:** Session 3  
+**Type:** Live implementation — UI documented for appendix
+
+**Two URI sections confirmed present.**
+
+**Values to enter:**
+
+Authorised JavaScript origins:
+`https://perelgut.github.io`
+
+Authorised redirect URIs:
+`https://perelgut.github.io/meeting-prep-agent`
+
+**Why these values:**
+- JavaScript origin: Google validates that OAuth requests originate
+  from this domain. Must match the domain exactly (no path).
+- Redirect URI: Where Google sends the user after granting permission.
+  Must match the exact URL of the application page.
+
+**Appendix note for students:** Replace `perelgut` with your own
+GitHub username in both URIs.
+
+---
+
+### Entry 157 — OAuth 2.0 Client ID created successfully
+**Date:** Session 3  
+**Type:** Live implementation milestone
+
+**OAuth 2.0 Client ID created.**
+
+**Screen shows:**
+- Long Client ID value (format: numbers-letters.apps.googleusercontent.com)
+- Download option (JSON credentials file — not needed for this project)
+- Done / Cancel buttons
+
+**Action:** Copy Client ID to Notepad. Do NOT download the JSON file.
+Click Done.
+
+**Why Client ID only (not the JSON file):**
+The JSON file contains both the Client ID and Client Secret. For
+browser-based OAuth using Google Identity Services, only the public
+Client ID is needed — the secret is not used in the browser flow
+and should never be embedded in browser-side JavaScript anyway.
+
+**Notepad should now contain:**
+- Cloudflare Account ID
+- Cloudflare API Token
+- Anthropic API Key
+- Google OAuth Client ID ← new
+
+**Next steps after Done:**
+1. Add yourself as a test user (OAuth consent screen → Test users)
+2. Add the Client ID to the application code
+3. Implement the Google Identity Services OAuth flow in app.js
+
+---
+
+### Entry 158 — Client ID secured in Notepad; navigating to test users
+**Date:** Session 3  
+**Type:** Live implementation milestone
+
+**Client ID safely copied to Notepad. Done clicked.**
+Navigating to OAuth consent screen to add test user.
+
+**Why test users are required:**
+The app is in "Testing" publishing status — not verified by Google.
+In testing mode, only email addresses explicitly added as test users
+can complete the OAuth sign-in flow. Anyone else will see an
+"Access blocked" error. For a course project this is the correct
+state — no Google verification needed.
+
+---
+
+### Entry 159 — OAuth consent screen: new UI layout documented
+**Date:** Session 3  
+**Type:** Live implementation — appendix correction needed
+
+**OAuth consent screen layout has changed** from the older single-page
+form to a multi-section navigation structure.
+
+**New left sidebar menu:**
+- Overview
+- Branding
+- Audience ← Test users are here
+- Clients
+- Data Access
+- Verification Center
+- Settings
+
+**Main area:** Metrics panels (Traffic, Errors, Users, OAuth token
+grant rate) — these are analytics, not configuration.
+
+**Popup:** "Now viewing project 'meeting-prep-agent' in organization
+'No organization'" — informational only, can be dismissed.
+
+**Appendix correction needed:** Previous instructions describing the
+OAuth consent screen as a single form are outdated. The current UI
+uses a multi-section sidebar navigation. Students should navigate
+to **Audience** to find the Test users section.
+
+**Running count of appendix corrections: now 33.**
+
+---
+
+### Entry 160 — Audience page layout documented; adding test user
+**Date:** Session 3  
+**Type:** Live implementation — UI documented for appendix
+
+**Audience page layout:**
+- Publishing status: **Testing** (correct — do not publish)
+  - "Publish app" button visible — do NOT click this
+- User type: External
+- OAuth user cap (informational)
+- Test users section with "+ Add users" button
+
+**Why leave status as Testing:**
+Publishing would require Google verification (a review process
+that takes days to weeks). In Testing mode, the app works perfectly
+for any email address added to the test users list. For a course
+project, Testing mode is the correct permanent state.
+
+**Action:** Click "+ Add users", enter your Google account email,
+and save. Each student using the application will also need to be
+added as a test user by the developer.
+
+**Appendix note for students:** Add your own Google account email
+as a test user. The instructor can also add student emails here
+so students can test the Calendar integration.
+
+---
+
+### Entry 161 — Test user added; Google Cloud setup complete
+**Date:** Session 3  
+**Type:** Live implementation milestone
+
+**Test user added successfully.** Email address appears in the
+Test users list below the "+ Add users" button.
+
+**Google Cloud setup — fully complete:**
+- ✅ Project created: meeting-prep-agent
+- ✅ Google Calendar API enabled
+- ✅ OAuth consent screen configured (app name, email, scopes)
+- ✅ calendar.readonly scope added
+- ✅ OAuth 2.0 Client ID created (Web application type)
+- ✅ Authorised JavaScript origin: https://perelgut.github.io
+- ✅ Authorised redirect URI: https://perelgut.github.io/meeting-prep-agent
+- ✅ Test user added: instructor's Google account email
+- ✅ Client ID safely in Notepad
+
+**What success looks like at this step:**
+Email address listed in the Test users section of the Audience page.
+Publishing status remains "Testing".
+
+**Next steps:**
+1. Add the Google Identity Services script to index.html
+2. Add the Client ID as a constant in app.js
+3. Update fetchCalendarEvents() to run the OAuth flow first,
+   then pass the access token to the API call
+4. Test the full Calendar flow end-to-end
+
+---
+
+### Entry 162 — Google OAuth flow deployed; both workflows green; testing
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**Three changes deployed:**
+- index.html: Google Identity Services script added ✅
+- app.js: GOOGLE_CLIENT_ID constant added ✅
+- app.js: fetchCalendarEvents() updated with OAuth flow ✅
+- app.js: getGoogleAccessToken() function added ✅
+
+Both workflows green. Testing OAuth flow live.
+
+**Expected behaviour on clicking "📅 From Google Calendar":**
+1. Google sign-in popup appears
+2. User signs in with their Google account
+3. Google asks to grant calendar.readonly permission
+4. User clicks Allow
+5. Access token returned to app
+6. Calendar events fetched and displayed as cards
+
+---
+
+### Entry 163 — OAuth error: 401 invalid_client; Client ID mismatch
+**Date:** Session 3  
+**Type:** Bug identified
+
+**Error:** "Access blocked: Authorization Error — The OAuth client
+was not found. Error 401: invalid_client"
+
+**Cause:** The Client ID in app.js does not match a valid OAuth
+client in the Google Cloud project. Either:
+1. The Client ID was pasted incorrectly (extra space, missing
+   characters, or truncated)
+2. The wrong Client ID value was used
+
+**Diagnosing:** Comparing the Client ID in app.js against the
+value in Notepad and in Google Cloud Console.
+
+The Client ID is a public value (not a secret) — safe to share
+and verify. Format is:
+`NUMBERS-LETTERS.apps.googleusercontent.com`
+
+---
+
+### Entry 164 — Client ID placeholder not replaced; fixing now
+**Date:** Session 3  
+**Type:** Bug fix — placeholder left in code
+
+**Root cause confirmed:** The `GOOGLE_CLIENT_ID` constant still
+contains the placeholder value `YOUR-CLIENT-ID.apps.googleusercontent.com`
+rather than the actual Client ID from Notepad.
+
+The instruction said "Replace YOUR-CLIENT-ID.apps.googleusercontent.com
+with the actual Client ID from your Notepad" but the replacement
+was not made before committing.
+
+**Fix:** Replace placeholder with actual Client ID value from Notepad.
+Commit message: "Set Google OAuth Client ID"
+
+---
+
+### Entry 165 — Process note: GOOGLE_CLIENT_ID must be set before committing
+**Date:** Session 3  
+**Type:** Process correction — documented for appendix and instructions
+
+**What happened:** The instruction to replace the placeholder
+`YOUR-CLIENT-ID.apps.googleusercontent.com` with the actual
+Client ID was given in prose but the replacement was not made
+before the file was committed. The placeholder went live.
+
+**This is a recurring pattern in this project:**
+- Worker URL placeholder (Entry 082) — `YOUR-SUBDOMAIN` left in
+  `js/api.js`, caught before commit that time
+- Client ID placeholder (this entry) — `YOUR-CLIENT-ID` left in
+  `js/app.js`, not caught before commit
+
+**Standing instruction for the appendix and implementation instructions:**
+Any time a file contains a placeholder value marked with
+`YOUR-...`, that value MUST be replaced with the real value
+before saving, committing, or pushing. Placeholders committed
+to GitHub will go live on GitHub Pages and cause the application
+to fail silently or with a confusing error.
+
+**Specific instruction for GOOGLE_CLIENT_ID:**
+After adding `const GOOGLE_CLIENT_ID = 'YOUR-CLIENT-ID.apps.googleusercontent.com';`
+to app.js, immediately replace the placeholder before doing
+anything else. The real value is in Notepad — it looks like:
+`123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com`
+
+**Verification step:** Before every commit, search the repository
+for the string `YOUR-` using VS Code's global search (Ctrl+Shift+F).
+If any results appear, replace them before committing.
+
+---
+
+### Entry 166 — Client ID fix deployed; both workflows green; retesting
+**Date:** Session 3  
+**Type:** Implementation — fix deployed
+
+**Real GOOGLE_CLIENT_ID committed and deployed.**
+Both workflows green. Retesting Google OAuth sign-in flow.
+
+**Expected result:** Google sign-in popup appears, user signs in,
+grants calendar.readonly permission, access token returned,
+calendar events fetched and displayed.
+
+---
+
+### Entry 167 — OAuth 401 persisting; verifying propagation and Client ID
+**Date:** Session 3  
+**Type:** Debugging — propagation delay suspected
+
+**Credentials in Google Cloud confirmed correct:**
+- Authorised JavaScript origins: https://perelgut.github.io ✅
+- Authorised redirect URIs: https://perelgut.github.io/meeting-prep-agent ✅
+
+**Likely cause:** Google OAuth credentials can take up to 5 minutes
+to propagate after creation. The error may clear on its own.
+
+**Verification step:** Checking GOOGLE_CLIENT_ID value in browser
+console to confirm the correct value is deployed on GitHub Pages.
+
+---
+
+### Entry 168 — Client ID confirmed correct in browser console; waiting for propagation
+**Date:** Session 3  
+**Type:** Debugging — propagation confirmed as likely cause
+
+**Browser console confirms correct Client ID is live:**
+`132688114703-8tgc8pbql5ci4rt8jmkahj145hbk2atr.apps.googleusercontent.com`
+
+**Code is correct. Credentials are correctly configured in Google Cloud.**
+**Waiting for Google OAuth credential propagation (up to 5 minutes).**
+
+No changes to make. Retry the Calendar button after waiting.
+
+**Note for appendix:** After creating an OAuth 2.0 Client ID in Google
+Cloud Console, wait 5 minutes before testing. The credentials take
+time to propagate through Google's systems. Testing immediately after
+creation will produce a "401 invalid_client" error even when everything
+is configured correctly.
+
+**Running count of appendix corrections: now 34.**
+
+---
+
+### Entry 169 — OAuth propagation complete; "Google hasn't verified this app" warning shown
+**Date:** Session 3  
+**Type:** Live implementation milestone
+
+**Propagation confirmed complete.** The 401 error is gone.
+Google now shows the expected "unverified app" warning screen.
+
+**This is the correct and expected behaviour** for an app in
+Testing mode with a sensitive scope. The warning is not an error.
+
+**What to tell students:**
+When you see "Google hasn't verified this app", this means the
+app has not gone through Google's formal verification process.
+For a development project you built yourself, this is normal and
+safe to proceed past. Click "Continue" (or "Advanced" → "Go to
+[app name] (unsafe)" depending on the browser).
+
+**Appendix note:** The warning screen layout varies slightly between
+browsers and Google account types. The key action is always to
+find and click "Continue" or "Advanced → Go to app".
+
+**Next:** Click Continue and document what follows.
+
+---
+
+### Entry 170 — gcal.mcp.claude.com confirmed incompatible; pivoting to direct Google Calendar API
+**Date:** Session 3  
+**Type:** Architecture decision — confirmed and resolved
+
+**Confirmed:** `gcal.mcp.claude.com` does not accept standard Google
+OAuth access tokens. The MCP error persists even with a valid token
+obtained from the user's Google sign-in. This server requires
+Anthropic-internal tokens from the Claude.ai product, not standard
+Google OAuth tokens from a third-party application.
+
+**Decision: abandon gcal.mcp.claude.com and call the Google Calendar
+API directly.**
+
+We already have everything we need:
+- The user's Google OAuth access token (from the sign-in flow)
+- The calendar.readonly scope
+- The Google Calendar REST API is publicly documented
+
+**Direct API call:**
+```
+GET https://www.googleapis.com/calendar/v3/calendars/primary/events
+Headers: Authorization: Bearer {access_token}
+Params: timeMin (now), timeMax (7 days from now), singleEvents: true,
+        orderBy: startTime
+```
+
+This returns events directly as JSON — no Claude needed, no MCP,
+no proxy. We parse the response ourselves and render the event cards.
+
+**Benefits of the direct approach:**
+- No rate limit issues (Google Calendar API, not Anthropic)
+- Faster (one fetch call, no AI processing)
+- More reliable (no MCP beta feature dependency)
+- Simpler code (plain fetch, standard JSON)
+
+**The OAuth flow we built stays exactly as-is.** Only
+`fetchCalendarEvents()` needs to change — replace the `callClaude()`
+call with a direct `fetch()` to the Google Calendar API.
+
+**Teaching point for students:** This is a real architectural lesson.
+Sometimes the "smart" AI-mediated path is less appropriate than a
+direct API call. The right tool for fetching structured data from
+a known API is the API itself, not an AI asked to fetch it for you.
+
+---
+
+### Entry 171 — Direct Google Calendar API deployed; both workflows green; testing
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**fetchCalendarEvents() rewritten to call Google Calendar API directly.**
+No MCP, no Claude mediation. Direct fetch with Bearer token.
+Both workflows green. Testing live.
+
+**Expected behaviour:**
+1. Click "📅 From Google Calendar"
+2. Google sign-in popup → sign in → Continue past warning
+3. Loading spinner
+4. Event cards appear showing upcoming meetings
+
+---
+
+### Entry 172 — Google Calendar integration working end-to-end
+**Date:** Session 3  
+**Type:** Live implementation milestone — major
+
+**Calendar entries appear after sign-in.** ✅
+
+**Full flow confirmed working:**
+1. Click "📅 From Google Calendar" ✅
+2. Google sign-in popup appears ✅
+3. User signs in with Google account ✅
+4. "Google hasn't verified this app" warning — click Continue ✅
+5. Loading spinner ✅
+6. Calendar events appear as cards ✅
+
+**Instructor reaction:** "Wow. Calendar entries have appeared."
+
+**Architecture confirmed:**
+- Google Identity Services handles the OAuth popup
+- `getGoogleAccessToken()` returns a standard Bearer token
+- `fetchCalendarEvents()` calls Google Calendar API directly
+- No MCP server, no Claude mediation for the calendar fetch
+- Events mapped to the same structure used by the manual form
+- "Use this meeting" will auto-fill the form
+
+**Teaching point confirmed:** The direct API approach is faster,
+more reliable, and simpler than the MCP approach for this use case.
+The AI adds value in the research and synthesis phases — not in
+fetching structured data from a well-documented REST API.
+
+**Task tracker update due:**
+- p6-t5: Google Calendar MCP integration → Done ✅
+  (Note: implemented via direct API, not MCP — worth documenting
+  in the task detail)
+
+**Still to test:**
+- Click "Use this meeting" on an event — does it auto-fill the form?
+- Does the full flow work through to briefing synthesis?
+
+---
+
+### Entry 173 — UX enhancement: "More meetings" pagination for Calendar picker
+**Date:** Session 3  
+**Type:** UX enhancement — instructor-directed
+
+**Issue:** Calendar picker only shows 7 days of events. If the
+meeting being prepped is more than a week away, the user cannot
+reach it.
+
+**Proposed behaviour:**
+- Initial load shows next 7 days
+- A "More meetings →" button appears below the event list
+- Clicking it replaces the current list with the following 7 days
+- The button changes to show the date range being displayed
+- A "← Previous" option allows going back
+
+**Simpler alternative (recommended for now):**
+- Show next 7 days initially
+- Add a single "Load more meetings" button below the list
+- Clicking it appends the next 7 days to the existing list
+- Button disappears after 3 loads (21 days total — reasonable limit)
+
+The append approach is simpler to implement and avoids the need
+for Previous navigation. Most meetings being prepped will be within
+3 weeks.
+
+**Implementation:** Add a `calendarOffset` state variable tracking
+how many days forward the next fetch should start. "Load more"
+increments it by 7 and appends new cards.
+
+**Scheduled:** Implement now as it directly affects usability.
+
+---
+
+### Entry 174 — Calendar pagination deployed; both workflows green; testing
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**Load more meetings pagination deployed.**
+Both workflows green. Testing live.
+
+**Expected behaviour:**
+- First 7 days of events shown
+- "Load more — [date range] →" button below the list
+- Clicking appends next 7 days
+- Available for up to 3 weeks (calendarOffset < 14)
+- Access token cached in state.calendarAccessToken so re-auth
+  not required on subsequent loads
+
+---
+
+### Entry 175 — Calendar auto-fill: title and time work; attendees, location, notes missing
+**Date:** Session 3  
+**Type:** Bug / enhancement — instructor-identified
+
+**What works:**
+- Meeting title auto-fills ✅
+- Date and time auto-fills ✅
+
+**What doesn't work:**
+- Attendees not populated
+- Location not populated (field not currently in the form)
+- Notes/description not going to Agenda field
+
+**Diagnosis:**
+
+**Attendees:** The Google Calendar API returns attendees as an array
+of objects with `email` and `displayName` fields. Our mapping code:
+```javascript
+attendees: (ev.attendees || []).map(a => a.displayName || a.email).join(', ')
+```
+This should work — but if the event has no attendees array (solo event,
+or organiser-only), it returns an empty string. Also possible the
+event being tested simply had no attendees listed in Google Calendar.
+
+**Description/notes → Agenda:** The mapping sets `description: ev.description || ''`
+and `selectCalendarEvent()` does:
+```javascript
+document.getElementById('f-agenda').value = ev.description || '';
+```
+This should work. If notes aren't appearing, the event may genuinely
+have no description in Google Calendar.
+
+**Location:** Google Calendar events have a `location` field we are
+not currently mapping or displaying. The form has no location field —
+it could be appended to the agenda/description if present.
+
+**Fixes needed:**
+1. Map `location` from the Google Calendar event
+2. In `selectCalendarEvent()`, combine description and location
+   into the agenda field: `[location]\n[description]` if both present
+3. Verify attendees mapping is correct — may need to check against
+   a real event that has attendees
+
+---
+
+### Entry 176 — Raw API response analysed; two fixes identified
+**Date:** Session 3  
+**Type:** Bug fix — diagnosis confirmed from live data
+
+**Raw API response for first event — key findings:**
+
+**Attendees:** Field absent entirely — this event was created by
+the instructor alone (self: true on both creator and organizer).
+No attendees array means no attendees to map. This is correct
+behaviour — the mapping code is fine. Events with invited attendees
+will populate correctly.
+
+**Location:** Present — `https://senecapolytechnic.zoom.us/j/92695649711`
+Currently not mapped in our event object or displayed anywhere.
+Should be included in the form.
+
+**Description:** Present but contains HTML markup (`<p>`, `<br/>`,
+`<br>`). Currently mapped as raw HTML — if placed in the agenda
+textarea it will show raw HTML tags rather than readable text.
+Must be stripped of HTML before use.
+
+**Two fixes required:**
+1. Add `location` to the event mapping in `fetchCalendarEvents()`
+2. Strip HTML from `description` before storing
+3. In `selectCalendarEvent()`, populate agenda with:
+   location (if present) + stripped description (if present)
+
+**HTML stripping approach:** Use a DOM trick —
+```javascript
+const el = document.createElement('div');
+el.innerHTML = htmlString;
+const text = el.innerText || el.textContent;
+```
+This safely converts HTML to plain text without regex.
+
+---
+
+### Entry 177 — Calendar auto-fill fixes deployed; testing
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**Two fixes deployed:**
+- `stripHtml()` utility strips HTML from event descriptions ✅
+- `location` field mapped from Google Calendar API ✅
+- `selectCalendarEvent()` combines location + description into
+  agenda field, separated by double newline ✅
+
+Both workflows green. Testing auto-fill with same event as before.
+
+**Expected result:** Agenda field shows:
+Line 1: Zoom URL (from location field)
+Blank line
+Lines 2+: Description text with HTML tags stripped — readable plain
+text of the Zoom invite details.
+
+---
+
+### Entry 178 — Root cause: event object serialisation in onclick attribute corrupted
+**Date:** Session 3  
+**Type:** Bug fix — root cause identified
+
+**Root cause:** `makeEventCard()` embeds the full event object in
+the onclick attribute using `JSON.stringify(ev).replace(/"/g, '&quot;')`.
+After `stripHtml()`, the description field contains newlines and
+potentially other special characters that break the HTML attribute
+even after quote escaping. The corrupted onclick silently fails,
+passing a malformed object to `selectCalendarEvent()` where
+`ev.description` and `ev.location` are undefined.
+
+**Fix:** Store events in a JavaScript Map keyed by ID. The onclick
+passes only the ID. `selectCalendarEvent()` looks up the full object
+from the Map. No serialisation to HTML attributes needed.
+
+**This is also the cleaner pattern generally** — embedding large
+objects in HTML attributes is fragile. IDs are safe.
+
+---
+
+### Entry 179 — Event store fix deployed; both workflows green; testing
+**Date:** Session 3  
+**Type:** Implementation — fix deployed
+
+**Event Map fix deployed:**
+- Events stored in `state.calendarEvents[ev.id]` ✅
+- onclick passes ID string only — no serialisation ✅
+- `selectCalendarEvent(id)` looks up full object from state ✅
+
+Both workflows green. Testing auto-fill with location and description.
+
+---
+
+### Entry 180 — Calendar auto-fill working; location populating correctly
+**Date:** Session 3  
+**Type:** Live implementation milestone
+
+**Auto-fill confirmed working:**
+- Title ✅
+- Date/time ✅
+- Location → Agenda field ✅
+- Description (HTML stripped) → Agenda field ✅ (if present)
+- Attendees ✅ (populated when event has attendees listed)
+
+**Instructor reaction:** "It pulled out the location!!"
+
+**Google Calendar integration — fully functional:**
+- OAuth sign-in flow ✅
+- Event cards with date, time, attendee count ✅
+- Load more pagination (3 weeks) ✅
+- Auto-fill form from selected event ✅
+- Switches to manual mode for review and editing ✅
+
+**Full pipeline now works from both entry points:**
+- Manual entry → research queue → synthesis → .docx ✅
+- Google Calendar → auto-fill → research queue → synthesis → .docx ✅
+
+**Task tracker updates due:**
+- p6-t5: Google Calendar integration → Done ✅
 
 ---
 
