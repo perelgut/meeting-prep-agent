@@ -546,6 +546,12 @@ async function fetchCalendarEvents() {
           name: 'google-calendar',
         }
       ],
+      tools: [
+        {
+          type: 'mcp_toolset',
+          mcp_server_name: 'google-calendar',
+        }
+      ],
       messages: [{
         role: 'user',
         content: `List my upcoming calendar events for the next 7 days.

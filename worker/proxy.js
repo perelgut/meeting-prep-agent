@@ -22,7 +22,7 @@ export default {
         'Content-Type': 'application/json',
         'x-api-key': env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'mcp-client-2025-04-04',
+        'anthropic-beta': 'mcp-client-2025-11-20',
       },
       body: JSON.stringify(body),
     });
