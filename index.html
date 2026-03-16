@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Prep Agent</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Meeting Prep Agent</h1>
+      <p class="header-sub">AI-powered meeting briefing generator</p>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="step-bar" id="step-bar">
+      <div class="step-item active" id="step-1">
+        <div class="step-dot">1</div>
+        <span>Meeting details</span>
+      </div>
+      <div class="step-sep">›</div>
+      <div class="step-item" id="step-2">
+        <div class="step-dot">2</div>
+        <span>Clarification</span>
+      </div>
+      <div class="step-sep">›</div>
+      <div class="step-item" id="step-3">
+        <div class="step-dot">3</div>
+        <span>Research queue</span>
+      </div>
+      <div class="step-sep">›</div>
+      <div class="step-item" id="step-4">
+        <div class="step-dot">4</div>
+        <span>Briefing</span>
+      </div>
+    </div>
+
+    <section id="section-details">
+
+      <div class="card">
+        <p class="card-label">Meeting details</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="f-title">Meeting title</label>
+            <input type="text" id="f-title"
+                   placeholder="e.g. Q4 AI Strategy Review">
+          </div>
+          <div class="form-group">
+            <label for="f-datetime">Date &amp; time</label>
+            <input type="datetime-local" id="f-datetime">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="f-attendees">
+            Attendees
+            <span class="label-hint">(comma separated)</span>
+          </label>
+          <input type="text" id="f-attendees"
+                 placeholder="e.g. Jane Smith, John Doe, Dr. Alice Wang">
+        </div>
+        <div class="form-group">
+          <label for="f-agenda">Agenda / topic</label>
+          <textarea id="f-agenda" rows="3"
+            placeholder="Describe the meeting purpose and agenda items…"></textarea>
+        </div>
+      </div>
+
+      <div class="card card-private">
+        <div class="private-header">
+          <div>
+            <p class="card-label card-label-warn">Your private context</p>
+            <p class="private-note">
+              Not included in the briefing document. Used only to guide
+              the agent's research and analysis.
+            </p>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.5" class="lock-icon">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <textarea id="f-context" rows="4"
+          placeholder="What do you think this meeting is really about? Any background, politics, or context not in the official agenda."></textarea>
+        <p class="private-footer">
+          Passed to the agent privately. Never appears in the briefing
+          or any shared output.
+        </p>
+      </div>
+
+      <button class="btn-primary" id="btn-discover"
+              onclick="runDiscovery()">
+        Identify research topics →
+      </button>
+
+    </section>
+
+    <section id="section-clarification" class="hidden">
+      <div class="card">
+        <div class="section-title-row">
+          <p class="card-label">Information requests</p>
+          <span class="count-badge" id="clarif-count"></span>
+        </div>
+        <p class="section-desc">
+          The agent has identified information it cannot access directly.
+          Review each request before research begins.
+        </p>
+        <div id="clarif-list"></div>
+      </div>
+      <button class="btn-primary" id="btn-to-queue"
+              onclick="openResearchQueue()">
+        Continue to research queue →
+      </button>
+    </section>
+
+    <section id="section-queue" class="hidden">
+      <div class="meeting-bar" id="meeting-bar"></div>
+      <div class="card" id="queue-card">
+        <div class="section-title-row">
+          <p class="card-label">Research topics</p>
+          <span class="count-badge" id="queue-count"></span>
+        </div>
+        <div class="topic-legend">
+          <span class="tag tag-news">Overall topic</span>
+          <span class="tag tag-agenda">Agenda item</span>
+          <span class="tag tag-att">Attendee</span>
+          <span class="tag tag-past">Past meeting</span>
+          <span class="tag tag-ctx">From your context</span>
+        </div>
+        <div id="topic-list"></div>
+      </div>
+      <div class="card card-warn" id="postponed-card" style="display:none">
+        <p class="card-label card-label-warn">
+          Postponed topics — final review
+        </p>
+        <p class="section-desc">
+          These were postponed. Investigate, discard, or skip each one.
+        </p>
+        <div id="postponed-list"></div>
+      </div>
+      <div class="complete-banner" id="complete-banner" style="display:none">
+        <p class="complete-title">Research complete</p>
+        <p class="complete-summary" id="complete-summary"></p>
+        <button class="btn-success" onclick="runSynthesis()">
+          Generate briefing document →
+        </button>
+      </div>
+    </section>
+
+    <section id="section-briefing" class="hidden">
+      <div class="briefing-header">
+        <div>
+          <h2 id="briefing-title">Meeting Briefing</h2>
+          <p id="briefing-date" class="briefing-date"></p>
+        </div>
+        <button class="btn-download" id="btn-download"
+                onclick="downloadDocx()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download .docx
+        </button>
+      </div>
+      <div id="briefing-sections"></div>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/docx-export.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

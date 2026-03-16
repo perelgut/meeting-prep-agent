@@ -3,7 +3,7 @@
 **Project:** Meeting Prep Agent  
 **Audience:** Students with no prior application development experience  
 **Platforms covered:** Windows and macOS  
-**Last Updated:** Session 2, Entry 035
+**Last Updated:** Session 2, Entry 079 — Major rewrite: Cloudflare section fully corrected from live walkthrough; GitHub Desktop cloning updated; Git terminal commands added; troubleshooting expanded
 
 ---
 
@@ -299,23 +299,90 @@ also upload files directly through the GitHub website.
 "Cloning" means downloading a copy of your GitHub repository to your
 computer so you can edit files locally in VS Code.
 
-1. Open GitHub Desktop.
-2. Click **File → Clone Repository**.
-3. Click the **GitHub.com** tab. Your repository (`meeting-prep-agent`)
-   should appear in the list. Click it.
-4. Choose a local folder where the files will be saved
-   (e.g. `Documents/meeting-prep-agent`).
-5. Click **Clone**.
-6. The repository files are now on your computer. Open VS Code and use
-   **File → Open Folder** to open that same folder.
+**Before you begin — choose your parent folder carefully:**
+When GitHub Desktop clones a repository, it creates a folder named
+after the repository inside whatever parent folder you choose.
+For example, if you clone into `Documents/Projects/`, GitHub Desktop
+creates `Documents/Projects/meeting-prep-agent/`.
 
-### Saving changes back to GitHub
+**Do not clone into a folder that is already named
+`meeting-prep-agent`** — this creates a confusing nested structure
+(`meeting-prep-agent/meeting-prep-agent/`). Use a neutral parent
+folder such as `Documents/Projects/` or `Documents/GitHub/`.
+
+**Windows and macOS — same steps:**
+
+1. Open GitHub Desktop. If you are already signed in, you will see
+   a list of your repositories. If `meeting-prep-agent` appears in
+   the list, clicking it will open the Clone dialog — continue from
+   step 3.
+
+2. If the repository is not in the list, click
+   **File → Clone Repository**.
+
+3. A "Clone a repository" dialog appears with three tabs:
+   **GitHub.com**, **GitHub Enterprise**, and **URL**.
+   Click the **GitHub.com** tab.
+
+4. Your repositories are listed. Find and click
+   `meeting-prep-agent`.
+
+5. Below the list, a **Local path** field shows where the files
+   will be saved. Click **Choose...** and navigate to your
+   preferred parent folder (e.g. `Documents/Projects/`).
+
+6. Click **Clone**.
+
+7. GitHub Desktop downloads the repository. When complete it shows:
+   "No uncommitted changes in this repository" along with options
+   to **Open in Visual Studio Code**, **Show in Explorer**, and
+   **View on GitHub**. This confirms the clone succeeded.
+
+8. Click **Open in Visual Studio Code** to open the project.
+
+### Using Git commands in VS Code instead of GitHub Desktop
+
+Once VS Code is open with your project folder, you can use Git
+commands directly in the VS Code terminal instead of switching
+to GitHub Desktop.
+
+**Opening the terminal in VS Code:**
+Press **Ctrl + `** (backtick key — top left, same key as `~`).
+A terminal panel opens at the bottom of VS Code.
+
+**Confirm Git is working:**
+```
+git status
+```
+This should show "On branch main" and list any changed files.
+If it shows "not a git repository", your terminal is pointed at
+the wrong folder — use **File → Open Folder** in VS Code to open
+the correct repository folder, then try again.
+
+**The four commands you will use most:**
+
+| Command | What it does |
+|---------|-------------|
+| `git status` | Shows what files have changed since the last commit |
+| `git pull` | Downloads changes from GitHub to your computer |
+| `git add .` | Stages all changed files ready for a commit |
+| `git commit -m "message"` | Saves a snapshot with a description |
+| `git push` | Sends your commits up to GitHub |
+
+**Standard workflow after editing files:**
+```
+git add .
+git commit -m "Brief description of what you changed"
+git push
+```
+
+### Saving changes back to GitHub (GitHub Desktop method)
 
 After editing files in VS Code:
 
 1. Return to GitHub Desktop. It will show a list of files you have changed.
 2. At the bottom left, type a short description of your changes
-   (e.g. "Updated Stage 2 documentation").
+   (e.g. "Add index.html shell").
 3. Click **Commit to main**.
 4. Click **Push origin** (top right). Your changes are now saved to GitHub.
 
@@ -395,14 +462,43 @@ browser. This is the entire purpose of the proxy.
 **Windows and macOS — same steps:**
 
 1. Open your browser and go to **https://cloudflare.com**
-2. Click **Sign up** (top right).
-3. Enter your email address and a password. Click **Create Account**.
-4. Check your email for a verification message from Cloudflare.
-5. Click the link in the verification email to verify your address.
-6. Cloudflare will ask if you want to add a website or domain.
-   Click **Skip** or **Skip for now** — you do not need a domain for
-   this project.
-7. You will land on the Cloudflare dashboard home page.
+
+2. You will see two prominent buttons. Ignore the **"Under Attack?"**
+   button — that is a different Cloudflare product for DDoS protection.
+   Click **"Start for Free"**.
+
+3. You can create an account with an email and password, or sign in
+   with Google. **Signing in with Google is recommended** if you
+   already use Google — it avoids creating yet another password to
+   manage.
+
+4. If using Google sign-in: click **Continue with Google**, select
+   your Google account, and grant permission. Skip to step 8.
+
+5. If using email and password: enter your email address and a
+   password, then click **Create Account**.
+
+6. If you used email/password, check your inbox for a verification
+   email from Cloudflare and click the link to verify your address.
+
+7. Cloudflare will ask several onboarding questions. Answer them as
+   follows — none of these answers affect how the account works:
+   - **Personal or Professional?** → Select **Personal**
+   - **Describe your use case** → Type something like:
+     "Building a personal web application that calls an AI API"
+   - **Solo or team?** → Select solo / working alone
+   - **How would you like to get started?** → Select
+     **"Build and scale apps globally"**
+   - **How would you like to start building?** → Select
+     **"Start with code or a template"**
+
+8. A Worker/Pages creation screen will appear with options including
+   "Connect GitHub", "Start with Hello World", etc. **Do not click
+   any of these options.** We do not create the Worker manually here
+   — it will be deployed automatically by GitHub Actions later.
+
+9. Navigate to the dashboard home by going directly to
+   **https://dash.cloudflare.com** in the address bar.
 
 ### Finding your Account ID
 
@@ -413,49 +509,118 @@ which Cloudflare account to deploy to.
 **Windows and macOS — same steps:**
 
 1. Sign in to **https://dash.cloudflare.com**
-2. On the dashboard home page, look at the right-hand sidebar.
-3. You will see a section labelled **Account ID** with a 32-character
-   string of letters and numbers (example: `a1b2c3d4e5f6...`).
-4. Click **Click to copy** or select and copy the value manually.
-5. Save this value — you will add it to GitHub Secrets shortly.
 
-If you do not see the Account ID in the sidebar, make sure you are on
-the **Home** page (click the Cloudflare logo top left to return there).
+2. You will see the dashboard home page showing your account name and
+   product cards (Domains, Workers & Pages, Zero Trust Security).
+
+3. Look at the **browser address bar**. The URL will read:
+   ```
+   https://dash.cloudflare.com/a1b2c3d4e5f6.../home
+   ```
+   The long string of letters and numbers between
+   `dash.cloudflare.com/` and `/home` is your **Account ID**.
+   It is 32 characters long.
+
+4. Select that string from the address bar and copy it.
+
+5. Open **Notepad** and paste it with a label:
+   ```
+   Cloudflare Account ID: [paste here]
+   Cloudflare API Token:  [to be filled in next]
+   ```
+   Keep Notepad open — you will need both values shortly.
 
 ### Navigating to Workers & Pages
 
 **Windows and macOS — same steps:**
 
-1. In the Cloudflare dashboard left sidebar, click **Workers & Pages**.
-2. This is where all your deployed Workers will appear after GitHub
-   Actions runs the deployment workflow.
-3. After your first successful deployment, you will see a Worker named
-   `meeting-prep-proxy` listed here.
-4. Click on it to see its URL, settings, and request logs.
+1. On the Cloudflare dashboard home page, you will see a
+   **Workers & Pages** card in the centre of the screen. It has a
+   **"+"** button in the top right corner and a **"Start building"**
+   button.
+
+2. **Do not click "Start building" or the "+" button.** Those open
+   a manual Worker creation wizard — we do not need this because our
+   Worker is deployed automatically by GitHub Actions.
+
+3. After your first successful GitHub Actions deployment, you can
+   return to this card and click on it to see your deployed Worker
+   `meeting-prep-proxy` listed inside.
 
 ### Obtaining a Cloudflare API Token
 
 The API token allows GitHub Actions to deploy your Worker automatically.
-It is a password-like value that gives GitHub Actions permission to act
-on your Cloudflare account — but only for Workers, not for anything else.
+It is a password-like value — treat it with the same care as a password.
 
 **Windows and macOS — same steps:**
 
-1. In the Cloudflare dashboard, click your profile icon (top right corner
-   — it shows your email initial).
-2. Click **My Profile**.
-3. In the left sidebar of the Profile page, click **API Tokens**.
-4. Click **Create Token**.
-5. Find the template named **Edit Cloudflare Workers** and click
-   **Use template** next to it.
-6. The template pre-fills the correct permissions. Do not change anything.
-7. Scroll down and click **Continue to summary**.
-8. Review the summary — it should say the token can edit Workers.
-9. Click **Create Token**.
-10. The token is displayed **once only**. Copy it immediately.
-11. Store it safely (a password manager is ideal). You cannot view it
-    again after leaving this page — if you lose it, you will need to
-    create a new one.
+1. Sign in to **https://dash.cloudflare.com**
+
+2. In the **left sidebar**, find and click **"Manage account"** to
+   expand it. Then click **"Account API tokens"**.
+
+3. The page will show "No API tokens" if this is a new account.
+   Click **"Create API token"**.
+
+4. A list of token templates appears. Find **"Edit Cloudflare Workers"**
+   in the list and click **"Use template"** next to it.
+
+5. A token configuration page opens with three sections:
+
+   **Token name (top of page):**
+   The name field is pre-filled with "Edit Cloudflare Workers".
+   Rename it to something descriptive:
+   `meeting-prep-agent-deploy`
+
+   **Permissions section:**
+   A list of pre-selected permissions will be shown, including:
+   - Account / Workers KV Storage / Edit
+   - Account / Workers Scripts / Edit
+   - Zone / Workers Routes / Edit
+   - Account / Account Settings / Read
+   - (and several others)
+
+   **Do not change any of these.** The template has pre-selected
+   exactly the right permissions. The long list is simply showing
+   you what has been selected — it is not asking you to choose.
+
+   **Zone Resources section:**
+   This section requires two rows to be configured:
+   - Row 1 is pre-filled: Include / All Zones / (greyed out third
+     field) — leave this row exactly as it is
+   - Click **"+ Add more"** — a second row appears
+   - In the third dropdown of the new row, select your account name
+     (shown as your email address's Account)
+   - Both rows together mean "all zones within my account"
+
+   **Client IP Address Filtering:** Leave blank.
+
+   **TTL:** Leave blank.
+
+6. Click **"Continue to summary"** at the bottom of the page.
+
+7. A summary page shows all permissions and resources. Review it —
+   you should see your account listed with multiple Workers
+   permissions, and "All zones / Workers Routes: Edit". If it looks
+   correct, click **"Create Token"**.
+
+8. The next page shows your token value **once only**:
+   - Copy the token value immediately
+   - Paste it into your Notepad file next to "Cloudflare API Token:"
+   - **Do not paste it into any chat, email, or shared document** —
+     paste it directly into Notepad or a password manager only
+   - You can ignore the "Test this token" curl command — it is
+     optional verification
+
+9. Click **"View all API tokens"** to return to the tokens list.
+
+10. Confirm your `meeting-prep-agent-deploy` token is listed with
+    **Status: Active**.
+
+**If you lose the token value:** It cannot be retrieved. Go to
+Manage account → Account API tokens, find the token, and use the
+Roll option to generate a new value. Update your GitHub Secret
+with the new value.
 
 ### Understanding the free tier
 
@@ -525,10 +690,36 @@ on your Worker's page in the Cloudflare dashboard exactly, including the
 `js/api.js` to GitHub and the GitHub Pages deployment has completed.
 
 **I lost my Cloudflare API token.**  
-Go to **https://dash.cloudflare.com** → profile icon → **My Profile** →
-**API Tokens**. The existing token cannot be recovered. Click **Create Token**,
-use the **Edit Cloudflare Workers** template again, create a new token, and
-update the `CLOUDFLARE_API_TOKEN` secret in your GitHub repository settings.
+Go to **https://dash.cloudflare.com** → left sidebar → **Manage account**
+→ **Account API tokens**. The existing token cannot be recovered. Find
+the token in the list and use the **Roll** option to generate a new value.
+Update the `CLOUDFLARE_API_TOKEN` secret in your GitHub repository settings
+with the new value.
+
+**Git says "not a git repository" when I type git status.**  
+Your VS Code terminal is pointed at the wrong folder. The terminal must
+be inside the folder that contains the `.git` hidden folder — this is
+your repository root. In VS Code, click **File → Open Folder** and
+navigate to the folder GitHub Desktop cloned (the one that contains
+your `css`, `js`, `worker` folders and `README.md`). Open that folder,
+then open a new terminal with **Ctrl + `** and try `git status` again.
+
+**My local folder has a nested structure like meeting-prep-agent/meeting-prep-agent/.**  
+This happens when you clone into a folder that was already named after
+the repository. The inner folder is your actual Git repository — open
+that inner folder in VS Code (not the outer one) and Git commands will
+work correctly. To avoid this in future, clone into a neutral parent
+folder such as `Documents/Projects/`.
+
+**git push asks for a username and password.**  
+On Windows, Git may prompt for GitHub credentials the first time you
+push. Enter your GitHub username and use a **Personal Access Token**
+as the password (not your GitHub account password). Create a Personal
+Access Token at github.com → Settings → Developer settings → Personal
+access tokens → Generate new token. Give it `repo` scope. GitHub
+Desktop avoids this issue entirely by handling authentication
+automatically — consider using it for pushes if the terminal prompts
+become frustrating.
 
 ---
 

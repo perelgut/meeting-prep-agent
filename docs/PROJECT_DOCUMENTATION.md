@@ -2,7 +2,7 @@
 
 **Course:** Computer Programming — AI Agents Module  
 **Project:** Meeting Prep Agent  
-**Last Updated:** Session 2, Entry 037 — styles.css produced; all source files complete; full package delivered
+**Last Updated:** Session 2, Entry 079 — Appendix A major rewrite complete; all 28 live session corrections applied
 
 ---
 
@@ -1212,6 +1212,1356 @@ styles file.
 **The full project documentation and implementation package is now
 complete.** Remaining work is review, refinement, and the Appendix A
 detailed step-by-step review deferred from Session 1.
+
+---
+
+### Entry 038 — Prerequisites live session: GitHub repository creation
+**Date:** Session 2  
+**Type:** Live implementation — instructor-led
+
+**Session context:**
+- Instructor already has a GitHub account — account creation step skipped
+- Platform: Windows
+- Starting with: creating the meeting-prep-agent repository on GitHub,
+  then enabling GitHub Pages, then cloning locally with GitHub Desktop
+
+This is a live walkthrough of the prerequisite steps from the Project Plan
+checklist (items 1.1 through 4.3 approximately). Any discrepancies between
+the written instructions and what is actually encountered on screen will
+be noted and corrected in the appendix.
+
+---
+
+### Entry 039 — GitHub repository created successfully; documentation thoroughness directive
+**Date:** Session 2  
+**Type:** Live implementation milestone + process directive
+
+**Repository creation: successful.**
+- Repository name: `meeting-prep-agent`
+- Visibility: Public
+- README file added at creation
+- No discrepancies encountered between written instructions and actual
+  GitHub UI on Windows — instructions accurate as written for this step
+
+**Process directive received:** Each step of each task must be documented
+as thoroughly as possible. This means:
+- What the user was instructed to do
+- What they actually saw on screen
+- Whether it matched the instructions or differed
+- Any clarifications or corrections needed
+- The outcome (success / issue encountered / resolved)
+
+This level of detail serves two purposes:
+1. It validates and improves the appendix instructions in real time
+2. It creates a genuine audit trail that future students can follow,
+   including knowing what "success looks like" at each step
+
+**Applying this directive going forward:** Every live step in this session
+will be logged with full detail in the diary before proceeding to the next.
+
+**Next step:** Enable GitHub Pages on the repository (Project Plan
+prerequisite item 1.2 / task tracker Phase 0, Task 2).
+
+---
+
+### Entry 040 — GitHub Pages enabled successfully
+**Date:** Session 2  
+**Type:** Live implementation milestone
+
+**GitHub Pages — enabled successfully.**
+
+**Steps taken:**
+1. Navigated to repository Settings tab (rightmost tab, gear icon)
+2. Located Pages in the left sidebar under "Code and automation"
+3. Found Build and deployment Source dropdown — defaulted to
+   "Deploy from a branch"
+4. Changed Source to "GitHub Actions"
+5. Change took effect immediately — no separate Save button required
+
+**What was seen on screen:** Exactly as described in the instructions.
+No discrepancies. The appendix instructions for this step are accurate
+and require no changes.
+
+**What success looks like at this step:**
+- Settings → Pages shows Source set to "GitHub Actions"
+- No error messages
+- No workflow file is required yet — that comes in Phase 5
+
+**Instruction accuracy:** Confirmed accurate for Windows, Chrome browser,
+current GitHub UI as of Session 2.
+
+**Next step:** Create Cloudflare account (Project Plan prerequisite /
+task tracker Phase 0, Task 3).
+
+---
+
+### Entry 041 — Cloudflare sign-up: three discrepancies found; appendix corrections needed
+**Date:** Session 2  
+**Type:** Live implementation — discrepancies identified
+
+**Three discrepancies between written instructions and actual Cloudflare UI:**
+
+**Discrepancy 1 — Button label:**
+- Written instructions say: "Click the Sign up button (top right)"
+- Actual UI shows: A button labelled **"Under Attack?"** prominently,
+  and a separate **"Start for Free"** button
+- Correction needed: Replace "Click Sign up" with "Click Start for Free"
+  and add a note that "Under Attack?" is a different product (Cloudflare's
+  DDoS protection service) and should be ignored
+
+**Discrepancy 2 — Sign-in method:**
+- Written instructions describe creating a new email/password account
+- Actual UI also offers: **Sign in with Google** (and likely Apple/GitHub)
+- Instructor chose: Sign in with Google — valid choice, avoids yet another
+  password to manage
+- Correction needed: Add a note that Google sign-in is available and
+  recommended if the user already uses Google. The steps that follow are
+  the same regardless of sign-in method.
+
+**Discrepancy 3 — First question after sign-in:**
+- Written instructions make no mention of a plan/use-case question
+- Actual UI asks: Whether the account will be used for **Personal,
+  Professional, or both**
+- Correction needed: Add a step covering this question and advise what
+  to select. For this project, **Personal** is the appropriate answer —
+  students are building a learning project, not a commercial product.
+  Either Personal or "both" will work technically; the choice affects
+  marketing emails, not functionality.
+
+**Current state:** Instructor is on the Cloudflare sign-up flow, at the
+Personal / Professional / Both question. Awaiting guidance on how to
+proceed so we can continue documenting what follows.
+
+**Appendix corrections to be made after this step is completed.**
+
+---
+
+### Entry 042 — Cloudflare onboarding questions: use case and team size
+**Date:** Session 2  
+**Type:** Live implementation — additional discrepancies identified
+
+**Additional onboarding screens not documented in the appendix:**
+
+**Screen 2 — Use case description:**
+- Cloudflare asked for a description of the intended use case
+- Instructor provided a description of the project
+- Correction needed: Add a step noting that Cloudflare asks for a
+  use case description. Students can write something like:
+  "Building a personal web application that calls an AI API"
+
+**Screen 3 — Team size:**
+- Cloudflare asked whether working solo or with a team
+- Instructor selected: Solo / working alone
+- Correction needed: Add a step noting this question. Students should
+  select solo/individual.
+
+**Screen 4 — "How would you like to get started?"**
+Three options presented:
+- Build and scale apps globally
+- Protect your apps and users
+- Connect and accelerate traffic
+
+**Correct selection for this project: "Build and scale apps globally"**
+This is the Workers and Pages path — exactly what we need for deploying
+the Cloudflare Worker proxy. The other two options lead to Cloudflare's
+CDN/DDoS and networking products which are not relevant to this project.
+
+**Running count of appendix corrections for the Cloudflare section:**
+1. Button label: "Start for Free" not "Sign up"
+2. "Under Attack?" button noted and dismissed
+3. Google sign-in option noted and recommended
+4. Personal / Professional / Both question — select Personal
+5. Use case description field — suggested text to provide
+6. Solo / team question — select solo
+7. "How would you like to get started?" — select "Build and scale apps globally"
+
+All corrections will be applied to Appendix A Section 6 after this
+onboarding flow is fully documented.
+
+---
+
+### Entry 043 — Cloudflare onboarding: "How would you like to start building?"
+**Date:** Session 2  
+**Type:** Live implementation — additional discrepancy identified
+
+**Screen 5 — "How would you like to start building?"**
+Six options presented:
+- Start with code or a template
+- Run serverless AI models globally
+- Set up object storage
+- Purchase a domain name
+- Store and transform images
+- Store and stream videos
+
+**Correct selection for this project: "Start with code or a template"**
+This leads directly to the Workers creation flow. All other options are
+unrelated Cloudflare products (R2 storage, domain registrar, Images, Stream).
+
+**Note for the appendix:** Students may be tempted by "Run serverless AI
+models globally" since this is an AI project — but that option refers to
+running AI inference models on Cloudflare's infrastructure, which is not
+what we are doing. Our Worker is a lightweight proxy, not an AI model.
+Worth a brief clarifying note in the appendix.
+
+**Running count of appendix corrections: now 8.**
+
+---
+
+### Entry 044 — Cloudflare onboarding: Worker creation screen
+**Date:** Session 2  
+**Type:** Live implementation — additional discrepancy identified
+
+**Screen 6 — Worker/Pages creation screen**
+Three-panel layout:
+- Left panel: "Create a worker"
+- Middle panel: "Ship something new" with five options:
+  - Connect GitHub
+  - Connect GitLab
+  - Start with Hello World
+  - Select a template
+  - Upload your static files
+- Right panel (implied): "Select a method"
+
+**Important clarification:** This screen is a general Pages/Workers
+creation wizard that Cloudflare shows to new accounts. We do NOT want
+to create a Worker manually through this UI — our Worker will be
+deployed automatically by GitHub Actions using Wrangler. Creating it
+manually here would create a duplicate and could cause naming conflicts.
+
+**Correct action: navigate away from this screen entirely.**
+The right move is to close or skip this wizard and go directly to the
+Cloudflare dashboard home page where the Account ID is visible.
+
+**How to navigate away:**
+- Look for a Cloudflare logo or home icon in the top left corner of
+  the page and click it to return to the dashboard home
+- OR look for a breadcrumb or "Back" link
+- OR navigate directly to https://dash.cloudflare.com
+
+**What we actually need from Cloudflare at this stage:**
+1. The Account ID (visible on the dashboard home page right sidebar)
+2. An API Token (created via profile → API Tokens)
+Neither of these requires interacting with this creation wizard at all.
+
+**Note for the appendix:** The entire onboarding flow (Screens 1–6)
+can be bypassed by going directly to https://dash.cloudflare.com after
+account creation and email verification. Students should be told to
+skip the onboarding wizard once they reach it.
+
+**Running count of appendix corrections: now 9.**
+
+---
+
+### Entry 045 — Cloudflare dashboard home: layout documented; Account ID location clarified
+**Date:** Session 2  
+**Type:** Live implementation — discrepancies identified and resolved
+
+**Dashboard home page — what was actually seen:**
+- No Cloudflare logo visible for navigation (correction needed in appendix)
+- Direct navigation to https://dash.cloudflare.com worked correctly
+- Page heading: "[email]'s Account" (confirms correct account)
+- Center shows product cards:
+  - Domains (with "Onboard a domain" button)
+  - Workers and Pages (with "Start building" button)
+  - Zero Trust Security (with "Get started" button)
+- "Next steps" section with three suggestions (can be ignored)
+- Left sidebar shows "Manage account" with sub-items including
+  "Account API tokens"
+- No clearly labelled "Account ID" visible in right sidebar as
+  written instructions described
+
+**Account ID location — correction needed:**
+The written instructions state the Account ID appears in the right-hand
+sidebar of the dashboard home page. This is not what was seen. The
+Account ID is more likely found in one of these locations depending on
+the current Cloudflare UI version:
+- Under "Manage account" in the left sidebar
+- In the URL itself when viewing the account: the long hex string in
+  https://dash.cloudflare.com/ACCOUNT-ID-HERE/...
+- In account settings
+
+**Immediate action to find the Account ID:**
+Look at the browser address bar right now. The URL should read something
+like: https://dash.cloudflare.com/a1b2c3d4e5f6.../home
+The long hex string between /dash.cloudflare.com/ and /home IS the
+Account ID. Copy it from there.
+
+**Also noted:** "Account API tokens" is visible under "Manage account"
+in the left sidebar — this is where we will create the Cloudflare API
+token in the next step, so that location is confirmed.
+
+**Running count of appendix corrections: now 11.**
+(Added: logo navigation unreliable; Account ID not in right sidebar
+as described — found in URL instead)
+
+---
+
+### Entry 046 — Account ID confirmed; Workers & Pages location corrected
+**Date:** Session 2  
+**Type:** Live implementation — discrepancies identified
+
+**Account ID — confirmed found in browser title/URL.**
+The page title reads "Account home | Perelgut@gmail.com's Account | Cloudflare"
+which confirms the correct account is active. Account ID location via
+the URL address bar confirmed as the reliable method.
+
+**Workers & Pages — location correction needed:**
+- Written instructions say: "In the left sidebar, click Workers & Pages"
+- Actual UI shows: Workers & Pages is a **box in the centre of the
+  dashboard home page**, not a left sidebar item. It has a "+" button
+  in its top right corner and a "Start building" button.
+- Correction needed in appendix: Describe Workers & Pages as a card
+  on the dashboard home, not a sidebar item. Students access it by
+  clicking the "+" or "Start building" button on that card, or by
+  clicking the card title itself.
+
+**Important note on "Start building" button:**
+Students must NOT click "Start building" here — that opens the manual
+Worker creation wizard we already encountered and want to avoid. The
+"+" button is also likely to open the same wizard. At this stage we
+only need to confirm Workers & Pages is visible — we do not click into
+it yet.
+
+**Two immediate tasks remaining before leaving Cloudflare for now:**
+1. Copy the Account ID from the browser address bar
+2. Create the API token (via Manage account → Account API tokens)
+
+**Running count of appendix corrections: now 12.**
+
+---
+
+### Entry 047 — Cloudflare API Tokens page reached; token creation in progress
+**Date:** Session 2  
+**Type:** Live implementation milestone
+
+**API Tokens page — successfully reached.**
+- Navigation path confirmed: Manage account → Account API tokens
+- Page shows "No API tokens" — correct for a new account
+- This confirms we are on the right page and ready to create the token
+
+**Appendix correction needed:**
+Written instructions say to navigate via profile icon → My Profile →
+API Tokens. Actual path is via the left sidebar: Manage account →
+Account API tokens. Both may work but the sidebar path is what was
+found in practice — the appendix should document this path as primary.
+
+**Running count of appendix corrections: now 13.**
+
+**Next action:** Create the API token. Instructions being provided live.
+
+---
+
+### Entry 048 — Cloudflare API token: permissions screen has many options
+**Date:** Session 2  
+**Type:** Live implementation — discrepancy identified; awaiting screen description
+
+**API Token template screen — "Edit Cloudflare Workers":**
+- "Use template" button successfully clicked
+- Screen shows a Permissions section with a large number of choices
+- This is more complex than the written instructions described
+
+**Written instructions said:** "The template pre-fills the correct
+permissions. Do not change anything."
+
+**What was actually encountered:** A permissions screen with many
+choices visible, implying the template does NOT simply pre-fill
+everything and hide the details — it shows them for review/modification.
+
+**Critical principle for this step:**
+The "Edit Cloudflare Workers" template pre-selects the correct
+permissions automatically. Students should NOT change anything —
+the pre-selected values are exactly right for deploying a Worker
+via GitHub Actions. The many choices visible are simply showing
+what the template has already selected, not asking the student
+to choose.
+
+**Awaiting:** Full description of what is pre-selected so we can
+document the correct state for the appendix and confirm nothing
+needs to be changed.
+
+**Running count of appendix corrections: now 14.**
+(Written instructions understated the complexity of this screen —
+needs fuller description of what students will see)
+
+---
+
+### Entry 049 — Cloudflare API token permissions: pre-selected values documented
+**Date:** Session 2  
+**Type:** Live implementation — permissions confirmed correct
+
+**API token permissions screen — pre-selected values confirmed:**
+
+The "Edit Cloudflare Workers" template pre-selects the following
+permissions (partial list as seen on screen):
+
+| Resource type | Resource | Access level |
+|--------------|----------|-------------|
+| Account | Workers KV Storage | Edit |
+| Account | Workers Scripts | Edit |
+| Zone | Workers Routes | Edit |
+| Account | Account Settings | Read |
+| (additional rows below) | | |
+
+**Assessment:** These are exactly the correct permissions for deploying
+a Cloudflare Worker via GitHub Actions (Wrangler). Specifically:
+- Workers Scripts/Edit — allows Wrangler to deploy the Worker code
+- Workers KV Storage/Edit — allows Wrangler to manage KV storage
+- Workers Routes/Edit — allows Wrangler to set up routing
+- Account Settings/Read — allows Wrangler to read account configuration
+
+**Instruction for students:** Do not change any of these pre-selected
+values. The template has already chosen the minimum required permissions.
+Adding more permissions is unnecessary; removing any will cause the
+deployment to fail.
+
+**Token name field:** Confirmed present at top of page, pre-filled
+with "Edit Cloudflare Workers". Students may rename it to something
+more descriptive like "meeting-prep-agent-deploy" but this is optional.
+
+**Next actions to document:**
+- What appears in the Account Resources and Zone Resources sections
+- What buttons appear at the bottom
+- What happens after clicking Continue / Create token
+
+**Running count of appendix corrections: 14 — no new ones this step,
+but the permissions table above needs to be added to the appendix
+so students know what "correct" looks like.**
+
+---
+
+### Entry 050 — Cloudflare API token: additional sections documented
+**Date:** Session 2  
+**Type:** Live implementation — sections documented
+
+**Token name:** Renamed to `meeting-prep-agent-deploy`. Confirmed this
+is optional but recommended for clarity.
+
+**Additional sections below Permissions — all three need appendix coverage:**
+
+**Zone Resources section:**
+Three fields in a row:
+- Field 1: Include / Exclude dropdown — leave as "Include"
+- Field 2: All Zones / Specific Zone dropdown — leave as "All Zones"
+- Field 3: A greyed-out field that cannot be changed — this is correct;
+  it becomes active only if "Specific Zone" is selected in field 2.
+  Since we are not targeting a specific domain, "All Zones" with the
+  third field greyed out is exactly right.
+
+**Client IP Address Filtering section:**
+- Leave blank — this is an optional security restriction that limits
+  which IP addresses can use the token. Not needed for this project
+  since GitHub Actions runs from variable IP addresses.
+
+**TTL (Time To Live) section:**
+- Leave blank — this sets an expiry date on the token. Leaving it
+  blank means the token does not expire. For a course project this
+  is fine; a production application might set a 90-day TTL.
+
+**Instruction for all three sections:** Leave everything at its
+default value. Do not add IP filtering. Do not set a TTL.
+
+**Running count of appendix corrections: now 15.**
+(Three additional sections not documented at all in original appendix)
+
+**Next action:** Scroll to the bottom of the page and describe
+the buttons present.
+
+---
+
+### Entry 051 — Cloudflare API token: "Continue to summary" button confirmed
+**Date:** Session 2  
+**Type:** Live implementation — button label documented
+
+**Button label confirmed:** "Continue to summary" — not "Create token"
+as the written instructions imply. Correction needed in appendix.
+
+**Instructor clicked "Continue to summary". Awaiting description of
+the summary page.**
+
+---
+
+### Entry 052 — Cloudflare API token: Zone Resources field is required; instructions incorrect
+**Date:** Session 2  
+**Type:** Live implementation — critical error in instructions identified
+
+**Problem encountered:** Clicking "Continue to summary" produced a
+validation error: "Choose a zone resource" — the Zone Resources field
+is required and cannot be left at its default state as previously
+instructed.
+
+**This contradicts Entry 050** which stated "Leave everything at its
+default value." That instruction was wrong. Correction needed.
+
+**Resolution options — investigating:**
+The Zone Resources section has three fields:
+- Include / Exclude
+- All Zones / Specific Zone
+- Greyed-out third field
+
+The error suggests "All Zones" with a greyed-out third field is not
+being accepted as a valid selection. Two possible fixes:
+
+**Option A:** The third greyed-out field needs to become active.
+If the second dropdown currently shows "All Zones", try changing it
+to "Specific Zone" — this may activate the third field, at which
+point the zone can be specified. However for our Worker we don't
+need a specific zone.
+
+**Option B:** The "All Zones" selection itself needs to be confirmed
+differently — there may be an "Add" button or similar that must be
+clicked to confirm the zone resource selection.
+
+**Immediate instruction:**
+Look at the Zone Resources row carefully. Is there an **"Add"** button,
+a **"+"** button, or any other button adjacent to the three fields that
+might need to be clicked to confirm the selection? Also check whether
+changing the second dropdown from "All Zones" to something else
+activates the third field.
+
+Describe exactly what you see in the Zone Resources row including
+any buttons we may have missed.
+
+**Running count of appendix corrections: now 16.**
+(Zone Resources is required, not optional as previously documented)
+
+---
+
+### Entry 053 — Cloudflare API token: Zone Resources has "+ Add more" button
+**Date:** Session 2  
+**Type:** Live implementation — resolution identified
+
+**Resolution found:** The Zone Resources row has a **"+ Add more"**
+button that was not previously noticed. This is almost certainly the
+mechanism required to confirm the zone resource selection and satisfy
+the validation.
+
+**Hypothesis:** Clicking "+ Add more" will either:
+A) Activate/confirm the existing "All Zones" selection so it is
+   recognised as a valid entry, OR
+B) Add a new zone resource row that can be filled in
+
+**Instructor is clicking "+ Add more". Awaiting result.**
+
+**Appendix correction confirmed:** The Zone Resources instruction must
+include the step "Click '+ Add more' to confirm the zone resource
+selection." The current instructions make no mention of this button
+at all.
+
+**Running count of appendix corrections: now 17.**
+
+---
+
+### Entry 054 — Cloudflare API token: Zone Resources second row resolves validation
+**Date:** Session 2  
+**Type:** Live implementation — resolution confirmed
+
+**What "+ Add more" produced:**
+A second Zone Resources row appeared with three pre-set fields:
+- Field 1: Include (pre-selected)
+- Field 2: All Zones (pre-selected)
+- Field 3: One option available — the user's Cloudflare account name
+  (in this case "Perelgut@gmail.com's Account")
+
+**Resolution:** Select the account name in the third field of the
+new row. This satisfies the "Choose a zone resource" validation
+requirement.
+
+**Correct Zone Resources configuration — now fully documented:**
+The section requires TWO rows:
+- Row 1: Include / All Zones / (greyed out — leave as is)
+- Row 2: Added via "+ Add more" → Include / All Zones /
+  [your account name] ← select this
+
+**Plain English explanation for students:**
+Cloudflare requires you to explicitly confirm which account's zones
+the token can access. The first row sets the scope to "all zones"
+but doesn't specify which account. The second row, created by
+clicking "+ Add more", lets you select your account — completing
+the specification. Both rows together mean "all zones within my
+account."
+
+**Appendix correction — full corrected Zone Resources instruction:**
+1. The Zone Resources section shows one row pre-filled with
+   Include / All Zones / (greyed out third field)
+2. Click "+ Add more" — a second row appears
+3. In the third field of the new row, click the dropdown and
+   select your account name
+4. Now click "Continue to summary"
+
+**Running count of appendix corrections: now 18.**
+
+**Instructor is selecting account name and clicking Continue to
+summary. Awaiting description of summary page.**
+
+---
+
+### Entry 055 — Cloudflare API token: summary page documented; ready to create
+**Date:** Session 2  
+**Type:** Live implementation — summary page fully documented
+
+**Summary page — full content recorded:**
+
+Page heading: "Manage account → Account API tokens → Edit token →
+[token name] API token summary"
+
+Informational note on page: "This API token will affect the below
+accounts and zones, along with their respective permissions. Not all
+APIs are guaranteed to support usage of Account API Tokens. Supported
+APIs are listed in the developer documentation."
+
+**Permissions summary as shown:**
+
+Account: Perelgut@gmail.com's Account
+- Workers KV Storage: Edit
+- Workers Scripts: Edit
+- Account Settings: Read
+- Workers Tail: Read
+- Workers R2 Storage: Edit
+- Cloudflare Pages: Edit
+- Workers Builds Configuration: Edit
+- Workers Agents Configuration: Edit
+- Workers Observability: Edit
+- Containers: Edit
+
+Zones: All zones
+- Workers Routes: Edit
+
+**Buttons at bottom:** Cancel | Create Token
+
+**Assessment of permissions:** The template pre-selected significantly
+more permissions than expected — the original instructions only mentioned
+Workers Scripts, KV Storage, Routes, and Account Settings. The actual
+template includes Workers Tail, R2 Storage, Pages, Builds Configuration,
+Agents Configuration, Observability, and Containers. These are all
+Workers-related permissions from the "Edit Cloudflare Workers" template.
+They are not harmful — they simply grant broader edit access across the
+Workers product suite. All are appropriate for this project and no
+changes are needed.
+
+**Note for appendix:** The permissions list is longer than originally
+documented. Students should be told: "The summary will show a list of
+Workers-related permissions across your account and all zones. This
+is correct — do not be concerned by the length of the list."
+
+**Token name typo noted:** The summary shows "eeting-prep-agent-deploy"
+— the leading "m" appears to have been dropped. This may be a display
+truncation artefact or a genuine typo when the token was renamed.
+Instructor should verify the name is correct before clicking Create Token.
+
+**Running count of appendix corrections: now 19.**
+
+---
+
+### Entry 056 — Cloudflare API token: created; awaiting confirmation of token display screen
+**Date:** Session 2  
+**Type:** Live implementation milestone
+
+**Token name typo fixed.** "meeting-prep-agent-deploy" confirmed correct.
+
+**"Create Token" clicked.** Token is being created. Awaiting description
+of the token display screen — this is the one-time-only display of the
+token value. Instructor must copy it immediately before navigating away.
+
+---
+
+### Entry 057 — Token display screen documented; security practice note recorded
+**Date:** Session 2  
+**Type:** Live implementation milestone + teaching note
+
+**Token creation success screen — fully documented:**
+Page content:
+- Heading: "[token name] API token was successfully created"
+- Warning: "Copy this token to access the Cloudflare API. For
+  security this will not be shown again."
+- Token value displayed (one-time only)
+- "Test this token" section with a sample curl command that includes
+  both the Account ID and the token value for verification
+
+**Context clarification:** The token and Account ID values were shared
+in the chat when describing the screen. This is a private Claude.ai
+conversation and the risk is minimal — no action required on the
+credentials. The instructor confirmed this and did not roll the token.
+
+**Teaching note for the appendix — professional habit, not emergency:**
+When writing the appendix instructions for this screen, include a
+note that in professional practice, credential values should go
+directly to their destination (GitHub Secrets, a password manager)
+rather than through any intermediate text. This is a good habit to
+build regardless of the channel — framed as professional practice,
+not a warning about Claude.ai specifically.
+
+**What "Test this token" shows:**
+A curl command containing:
+- The API endpoint: https://api.cloudflare.com/client/v4/accounts/
+  [Account ID]/tokens/verify
+- An Authorization header with the token value
+Students do not need to run this curl command — it is optional
+verification. The token will be tested implicitly when GitHub Actions
+runs the deployment workflow for the first time.
+
+**Appendix instruction for this screen:**
+1. The token value appears in a box — copy it immediately
+2. Paste it into Notepad (or directly into GitHub Secrets)
+3. Do not run the curl test unless you want to verify — it is optional
+4. Once copied, click the button to proceed (likely "Go to API Tokens"
+   or similar — document exact label when seen)
+5. The token value cannot be retrieved again after leaving this page —
+   if lost, the token must be rolled (regenerated) from the API Tokens
+   list
+
+**Running count of appendix corrections: now 20.**
+
+---
+
+### Entry 058 — Token display screen: exit button labelled "View all API tokens"
+**Date:** Session 2  
+**Type:** Live implementation — button label documented
+
+**Exit button on token display screen:** "View all API tokens"
+— not "Go to API Tokens", "Done", or "Return to dashboard" as
+anticipated. Correction needed in appendix.
+
+**Appendix instruction for this screen — updated:**
+After copying the token value, click **"View all API tokens"**
+to return to the API tokens list. Confirm the new token
+`meeting-prep-agent-deploy` is listed with an "Active" status.
+
+**Running count of appendix corrections: now 21.**
+
+**Next steps:**
+1. Get Anthropic API key from console.anthropic.com
+2. Add all three secrets to GitHub:
+   - ANTHROPIC_API_KEY
+   - CLOUDFLARE_API_TOKEN (in Notepad)
+   - CLOUDFLARE_ACCOUNT_ID (from URL at dash.cloudflare.com)
+
+---
+
+### Entry 059 — Cloudflare API tokens list: token confirmed active
+**Date:** Session 2  
+**Type:** Live implementation milestone
+
+**API tokens list — confirmed:**
+- Token name: `meeting-prep-agent-deploy`
+- Permissions: listed (Workers-related permissions as documented in Entry 055)
+- Resources: listed (account + all zones as configured)
+- Status: **Active**
+
+**What success looks like at this step:**
+The token list shows the token name, a summary of its permissions and
+resources, and a green "Active" status indicator. This confirms the
+token was created correctly and is ready to use.
+
+**Appendix instruction confirmed:** After clicking "View all API tokens",
+students should see their token listed with Active status. If the status
+shows anything other than Active, the token creation should be repeated.
+
+**Cloudflare setup is now fully complete.** All values needed for GitHub
+Secrets are available:
+- CLOUDFLARE_ACCOUNT_ID — from browser URL at dash.cloudflare.com
+- CLOUDFLARE_API_TOKEN — in Notepad (the meeting-prep-agent-deploy token)
+
+**Next step:** Get Anthropic API key from console.anthropic.com
+
+---
+
+### Entry 060 — Anthropic API key obtained
+**Date:** Session 2  
+**Type:** Live implementation milestone
+
+**Anthropic API key: obtained successfully.**
+Key format confirmed: begins with `sk-ant-` — correct format for
+Anthropic API keys. Full value safely in Notepad only.
+
+**Note:** The instructor shared only the prefix and suffix in chat —
+the full key was not exposed. Good practice observed.
+
+**Appendix gap identified:** The Anthropic console UI was not
+documented during this step — the instructor obtained the key
+without describing each screen. The appendix section on getting
+an Anthropic API key needs to be written based on the known
+console.anthropic.com interface. This will be flagged as a
+section requiring live verification in a future session.
+
+**All three secrets now in hand:**
+- ANTHROPIC_API_KEY — in Notepad (sk-ant-...format)
+- CLOUDFLARE_API_TOKEN — in Notepad (meeting-prep-agent-deploy)
+- CLOUDFLARE_ACCOUNT_ID — from Cloudflare dashboard URL
+
+**Next step:** Add all three secrets to the GitHub repository.
+Navigate to: github.com → meeting-prep-agent repository →
+Settings → Secrets and variables → Actions
+
+---
+
+### Entry 061 — GitHub Secrets page reached; adding secrets in progress
+**Date:** Session 2  
+**Type:** Live implementation milestone
+
+**GitHub Secrets page — successfully reached.**
+Navigation path confirmed: Repository → Settings → Secrets and
+variables → Actions → "New repository secret" button visible.
+
+**Appendix correction needed:**
+Written instructions say the path is Settings → Secrets and variables
+→ Actions. This appears to be correct based on what was reached.
+The "New repository secret" button label is also confirmed.
+
+**Adding three secrets in sequence:**
+1. ANTHROPIC_API_KEY — in progress
+2. CLOUDFLARE_API_TOKEN — to follow
+3. CLOUDFLARE_ACCOUNT_ID — to follow
+
+Awaiting confirmation of what the form looks like and what the
+page shows after each secret is saved.
+
+---
+
+### Entry 062 — GitHub Secrets: ANTHROPIC_API_KEY added; documenting result page
+**Date:** Session 2  
+**Type:** Live implementation milestone
+
+**ANTHROPIC_API_KEY secret: created successfully.**
+
+Awaiting description of the secrets list page to document:
+- How a saved secret is displayed (name, date, update/delete buttons)
+- Whether "New repository secret" remains available to add more
+- What "success looks like" for students at this step
+
+This will complete the appendix documentation for the GitHub Secrets
+page layout.
+
+---
+
+### Entry 063 — GitHub Secrets list confirmed; details being documented
+**Date:** Session 2  
+**Type:** Live implementation — awaiting full description
+
+**Confirmed:** ANTHROPIC_API_KEY appears in the secrets list and
+"New repository secret" button is still visible. Awaiting description
+of exactly what the listing shows (columns, buttons, dates, indicators)
+for full appendix documentation.
+
+---
+
+### Entry 064 — GitHub Secrets list layout fully documented
+**Date:** Session 2  
+**Type:** Live implementation — page layout confirmed
+
+**Secrets list page layout — fully documented:**
+- Column 1: **Name** — shows the secret name (e.g. ANTHROPIC_API_KEY)
+- Column 2: **Last Updated** — shows the date the secret was last set
+- Per-row actions: **Edit** and **Delete** buttons/icons
+
+**Note:** The secret value itself is never shown — only the name and
+last-updated date. This is by design — GitHub never reveals secret
+values after they are saved. The Edit button allows replacing the
+value with a new one without seeing the old value.
+
+**What success looks like at this step:**
+ANTHROPIC_API_KEY listed with today's date in Last Updated column
+and Edit/Delete options visible. No error messages.
+
+**Appendix instruction confirmed and corrected:**
+Original instructions did not describe what the secrets list looks
+like after adding a secret. Add this description so students know
+what to expect.
+
+**Running count of appendix corrections: now 22.**
+
+**Next action:** Add the second secret. Click "New repository secret"
+and add CLOUDFLARE_API_TOKEN.
+
+---
+
+### Entry 065 — All three GitHub Secrets added successfully
+**Date:** Session 2  
+**Type:** Live implementation milestone
+
+**All three repository secrets added:**
+- ANTHROPIC_API_KEY — added ✅
+- CLOUDFLARE_API_TOKEN — added ✅
+- CLOUDFLARE_ACCOUNT_ID — added ✅
+
+All three appear in the secrets list with Name and Last Updated
+columns and Edit/Delete options per row.
+
+**What success looks like at this step:**
+Three secrets listed, all with today's date in Last Updated.
+No error messages. Secret values not visible — only names shown.
+
+**Prerequisite checklist item 3.6 complete:**
+"You have added all three secrets to GitHub" — confirmed done.
+
+**Summary of completed prerequisites so far:**
+- ✅ GitHub account (existing)
+- ✅ Repository created: meeting-prep-agent (public, with README)
+- ✅ GitHub Pages enabled (Source: GitHub Actions)
+- ✅ Cloudflare account created
+- ✅ Cloudflare API token created: meeting-prep-agent-deploy (Active)
+- ✅ Cloudflare Account ID noted
+- ✅ Anthropic API key obtained
+- ✅ All three GitHub Secrets added
+
+**Remaining prerequisites:**
+- VS Code installation (task tracker Phase 0, Task 7)
+- GitHub Desktop installation and repository clone
+- GitHub Projects board creation
+
+**Running count of appendix corrections: 22**
+(No new corrections this step — GitHub Secrets UI matched instructions)
+
+---
+
+### Entry 066 — Process correction: task tracker not being updated during live session
+**Date:** Session 2  
+**Type:** Process correction — instructor-directed
+
+**Issue identified:** During the live prerequisites walkthrough (Entries
+038–065), no instruction was given to update the task tracker after
+each completed task. This contradicts the purpose of the task tracker
+and the thoroughness directive from Entry 039.
+
+**Correction:** The task tracker must be updated after every completed
+task — not just the project documentation diary. Going forward, every
+completed live step will include an explicit instruction to open the
+task tracker and mark the relevant task as Done.
+
+**Tasks completed during this session that need to be marked Done
+in the task tracker immediately:**
+
+Phase 0:
+- Task p0-t1: Create GitHub account and repository ✅
+- Task p0-t2: Enable GitHub Pages ✅
+- Task p0-t3: Create Cloudflare account ✅
+- Task p0-t4: Get Anthropic API key ✅
+- Task p0-t5: Get Cloudflare API token ✅
+- Task p0-t6: Add secrets to GitHub repository ✅
+- Task p0-t7: Install VS Code and clone repository — VS Code installed;
+  clone not yet done ⏳
+
+**Standing instruction recorded:** After each live task is confirmed
+complete, explicitly instruct the instructor to open task-tracker.html
+and mark the task as Done before proceeding to the next task.
+
+---
+
+### Entry 067 — Live walkthrough: cloning the repository with GitHub Desktop
+**Date:** Session 2  
+**Type:** Live implementation — verifying appendix instructions
+
+**Context:** VS Code already installed. GitHub Desktop not yet confirmed
+as installed. Proceeding to walk through the cloning steps live,
+verifying the appendix instructions against the actual UI on Windows.
+
+Appendix Section 5 (GitHub Desktop) will be verified step by step.
+Any discrepancies will be noted and corrected.
+
+---
+
+### Entry 068 — GitHub Desktop: already installed, signed in, repository visible
+**Date:** Session 2  
+**Type:** Live implementation — appendix discrepancy identified
+
+**GitHub Desktop status:**
+- Already installed — installation steps not verified live this session
+- Already signed in to GitHub account
+- Repository list visible on opening, including `meeting-prep-agent`
+
+**Appendix discrepancy identified:**
+The appendix cloning instructions start with "Open GitHub Desktop" and
+then "Click File → Clone Repository" — implying the user starts from
+a blank state. In practice, if GitHub Desktop is already signed in and
+the repository exists on GitHub, the repository may already appear in
+the list on the main screen and can be cloned directly from there
+without going through File → Clone Repository.
+
+**Appendix correction needed:**
+Add a note before the cloning steps: "If GitHub Desktop is already
+signed in and shows a list of repositories, your `meeting-prep-agent`
+repository may already be visible. In that case, click it directly
+in the list and proceed to step 4 (choose local folder)."
+
+**Running count of appendix corrections: now 23.**
+
+**Next action:** Clone the repository. Since meeting-prep-agent is
+visible in the list, click it and document what happens next.
+
+---
+
+### Entry 069 — GitHub Desktop: Clone dialog opens with three tabs
+**Date:** Session 2  
+**Type:** Live implementation — appendix correction identified
+
+**Clone a repository dialog — confirmed:**
+Three tabs displayed:
+- GitHub.com
+- GitHub Enterprise
+- URL
+
+**Appendix correction needed:**
+The appendix says "Click File → Clone Repository" then "Click the
+GitHub.com tab." This is correct — but the dialog opens with these
+three tabs regardless of whether the user clicked File → Clone
+Repository from the menu or clicked a repository in the list.
+The list click does NOT clone directly — it opens the same dialog.
+
+Correction: Clarify that clicking a repository in the list opens
+the Clone dialog, same as File → Clone Repository. Both paths lead
+to the same place.
+
+**Current state:** Instructor is on the GitHub.com tab (or needs to
+click it). The repository list on that tab should show meeting-prep-agent.
+
+**Running count of appendix corrections: now 24.**
+
+**Next instruction:** Click the **GitHub.com** tab. The meeting-prep-agent
+repository should appear in the list. Describe what you see.
+
+---
+
+### Entry 070 — Repository already cloned; VS Code already open with folder structure
+**Date:** Session 2  
+**Type:** Live implementation — significant finding
+
+**Finding:** The meeting-prep-agent repository was already cloned to
+the local computer. GitHub Desktop shows:
+- "No uncommitted changes in this repository"
+- Options: Open in Visual Studio Code / Show in Explorer / View on GitHub
+
+This means:
+1. The clone step was already completed (likely when the repository
+   was created and GitHub Desktop automatically detected it)
+2. VS Code is already open with the folder structure from the
+   implementation documents
+3. The repository is ready for files to be added
+
+**Additional finding — folder structure already created:**
+The instructor has VS Code open with the folder structure described
+in the implementation instructions already in place. This is a
+significant step forward — Phase 1 tasks are partially complete.
+
+**Appendix correction needed:**
+The clone walkthrough assumed a fresh state. In practice, GitHub
+Desktop may automatically clone or detect a repository that was
+just created, especially if the user is already signed in. Add a
+note: "If GitHub Desktop already shows your repository with 'No
+uncommitted changes', the clone is complete — proceed to opening
+the folder in VS Code."
+
+**What "ready to begin" looks like — confirmed:**
+- GitHub Desktop shows the repository with no uncommitted changes ✅
+- VS Code is open with the project folder ✅
+- All three GitHub Secrets are in place ✅
+- This matches the "What Ready to Begin Looks Like" checklist in
+  the Project Plan exactly
+
+**Running count of appendix corrections: now 25.**
+
+**Task tracker updates due:**
+- p0-t7: Install VS Code and clone repository → **Done** ✅
+- p1-t1: Create folder structure → **Done** ✅ (already created)
+
+Please open the task tracker and mark both as Done.
+
+---
+
+### Entry 071 — Folder structure verified; one anomaly identified
+**Date:** Session 2  
+**Type:** Live implementation — structure confirmed with one correction needed
+
+**Folder structure in VS Code — confirmed:**
+- `.github/workflows` ✅
+- `css` ✅
+- `docs` ✅ — already contains documentation files
+- `js` ✅
+- `tasks` ✅ — task-tracker.html already in use
+- `worker` ✅
+
+**One anomaly:** A folder named `meeting-prep-agent` appears inside
+the repository. This should NOT be there — the repository root IS
+the meeting-prep-agent folder. A folder of the same name inside it
+suggests the repository was cloned into a parent folder and then
+the inner folder was also opened, or the folder structure was
+created with an extra nesting level.
+
+**This needs to be investigated.** The `meeting-prep-agent` subfolder
+should not exist. If it contains files, those files are in the wrong
+place and won't be served correctly by GitHub Pages, which serves
+from the repository root.
+
+**Immediate action:** Click on the `meeting-prep-agent` subfolder in
+VS Code Explorer and tell me:
+1. What files or folders are inside it?
+2. Is it empty, or does it contain content?
+
+If it is empty — delete it.
+If it contains files — those files need to be moved up to the
+repository root before proceeding.
+
+**Task tracker updates confirmed:**
+- p0-t7: Done ✅
+- p1-t1: Done ✅ (pending resolution of the extra folder)
+
+**Running count of appendix corrections: now 25** — no new corrections
+this step, but the extra folder issue needs resolution.
+
+---
+
+### Entry 072 — README.md in wrong location; needs to be moved to repository root
+**Date:** Session 2  
+**Type:** Live implementation — structural error identified and resolved
+
+**Finding:** The `meeting-prep-agent` subfolder contains only `README.md`.
+This is the README that was created when the GitHub repository was
+set up with "Add a README file" checked. It ended up in a subfolder
+instead of the repository root.
+
+**Root cause:** When GitHub creates a repository with a README, the
+file is created at the root of the repository on GitHub. Somewhere
+during the local setup a `meeting-prep-agent` subfolder was created
+inside the already-named repository folder, and the README ended up
+there — or the folder was created inadvertently.
+
+**Correct state:** README.md must be at the repository root, i.e.
+directly inside the `meeting-prep-agent` folder that GitHub Desktop
+manages — not inside a subfolder of the same name.
+
+**Resolution steps being provided:**
+1. In VS Code, drag README.md from the meeting-prep-agent subfolder
+   up to the repository root
+2. Delete the now-empty meeting-prep-agent subfolder
+3. Verify the structure in GitHub Desktop — it should show README.md
+   as a changed/moved file
+
+**Appendix note to add:** When creating the folder structure, never
+create a folder with the same name as the repository itself inside
+the repository. The repository folder IS the project root.
+
+**Running count of appendix corrections: now 26.**
+
+---
+
+### Entry 073 — README.md moved to repository root; structure correct
+**Date:** Session 2  
+**Type:** Live implementation milestone
+
+**Resolution confirmed:** README.md successfully moved from the
+`meeting-prep-agent` subfolder to the repository root. The empty
+subfolder deleted. Repository structure is now correct.
+
+**Correct final structure confirmed:**
+```
+meeting-prep-agent/     ← repository root
+  ├── .github/
+  │   └── workflows/
+  ├── css/
+  ├── docs/
+  ├── js/
+  ├── tasks/
+  ├── worker/
+  └── README.md
+```
+
+**Next action:** Commit this fix to GitHub.
+Commit message to use: `Fix repository structure — move README.md to root`
+
+**Task tracker update due after commit:**
+- p1-t1: Create folder structure — confirm Done once commit succeeds
+
+---
+
+### Entry 074 — Question: how to sync VS Code with GitHub repository
+**Date:** Session 2  
+**Type:** Live implementation — teaching moment; appendix gap identified
+
+**Question asked:** "How do I make my project match my GitHub repository?"
+
+**Context:** There may be files on GitHub (such as the README.md that
+was created when the repository was set up) that are not yet reflected
+in the local VS Code workspace, or vice versa. The student needs to
+understand the relationship between the three locations:
+1. GitHub (remote — the authoritative copy online)
+2. Local folder on computer (working copy — where VS Code edits)
+3. GitHub Desktop (the bridge — syncs between 1 and 2)
+
+**Appendix gap identified:** The appendix explains committing and
+pushing (local → GitHub) but does not explain pulling (GitHub → local).
+This is the "fetch" or "pull" operation in GitHub Desktop.
+
+**Resolution being provided live.**
+
+---
+
+### Entry 075 — Git commands in VS Code terminal: documented as alternative to GitHub Desktop
+**Date:** Session 2  
+**Type:** Teaching moment + appendix addition
+
+**Instructor preference:** Use Git commands directly in VS Code terminal
+rather than GitHub Desktop. This is a valid and often preferred approach
+for developers comfortable with the command line.
+
+**Appendix addition needed:** Add a section "Using Git in VS Code
+terminal" as an alternative to GitHub Desktop. This is particularly
+relevant for students who become comfortable with VS Code and want
+to stay in one tool.
+
+**Git commands being documented live.**
+
+---
+
+### Entry 076 — git status: "not a git repository" — terminal in wrong folder
+**Date:** Session 2  
+**Type:** Live implementation — common error documented
+
+**Error encountered:** `git status` returned "not a git repository"
+
+**Cause:** The VS Code terminal opened in a folder that is not the
+repository root — likely the user's home directory or a parent folder.
+Git only recognises a repository when the terminal is pointed at the
+folder that contains the `.git` hidden folder, which is the repository
+root.
+
+**Resolution:** Navigate the terminal to the correct folder using
+the `cd` command, OR open the folder correctly in VS Code so the
+terminal defaults to the right place.
+
+**Appendix addition needed:** Add a note explaining this error and
+how to resolve it — it is one of the most common first-time Git
+mistakes.
+
+**Running count of appendix corrections: now 27.**
+
+---
+
+### Entry 077 — Folder structure: nested meeting-prep-agent accepted as working setup
+**Date:** Session 2  
+**Type:** Design decision — instructor-directed
+
+**Decision:** The local folder structure is:
+`...Project/meeting-prep-agent/meeting-prep-agent/`
+
+The inner `meeting-prep-agent` folder is the actual Git repository
+root — it contains the `.git` folder and all project files, and
+Git commands work correctly from within it. The outer folder is
+simply a parent container.
+
+**This is acceptable and will not be changed.** Attempting to
+restructure a working Git setup mid-session introduces more risk
+than the nested naming is worth. The application will work
+correctly regardless of what the parent folder is named.
+
+**What this means for students:**
+When GitHub Desktop clones a repository, it creates a folder with
+the repository name inside whatever parent folder the user chooses.
+If the user had already created a folder called `meeting-prep-agent`
+as the parent, the clone produces the nested structure. Students
+should be advised to clone into a neutral parent folder such as
+`Documents/GitHub/` or `Documents/Projects/` rather than a folder
+named after the repository itself.
+
+**Appendix addition needed:** Add a note to the cloning instructions:
+"Choose a parent folder that is NOT named after your repository.
+For example, clone into `Documents/Projects/` — GitHub Desktop will
+create the `meeting-prep-agent` folder inside it automatically."
+
+**Running count of appendix corrections: now 28.**
+
+**Current working state:**
+- Git repository: `...Project/meeting-prep-agent/meeting-prep-agent/`
+- Git commands work from this folder ✅
+- VS Code terminal pointed at this folder ✅
+- Proceeding with commit and push of README.md fix
+
+---
+
+### Entry 078 — First commit and push successful
+**Date:** Session 2  
+**Type:** Live implementation milestone
+
+**git add . / git commit / git push — all completed successfully.**
+
+No authentication issues on push. Git commands work correctly from
+the VS Code terminal pointed at the inner repository folder.
+
+**What success looks like at this step:**
+- `git add .` — no output (normal)
+- `git commit -m "..."` — shows something like:
+  `[main xxxxxxx] Fix repository structure — move README.md to root`
+- `git push` — shows something like:
+  `To https://github.com/username/meeting-prep-agent`
+  `main -> main`
+
+**Task tracker updates due:**
+- p1-t1: Create folder structure in repository → **Done** ✅
+- p1-t7: First commit and push to GitHub → **Done** ✅
+
+Please open the task tracker and mark both as Done.
+
+**Confirmed working Git workflow for this project:**
+```
+Edit files in VS Code
+    ↓
+git add .
+git commit -m "description"
+git push
+    ↓
+Changes live on GitHub
+```
+
+**Repository is now in a clean, committed state. Ready to begin
+Phase 1 file creation — starting with index.html.**
+
+---
+
+### Entry 079 — Appendix A: full rewrite complete; all 28 corrections applied
+**Date:** Session 2  
+**Type:** Documentation correction — major rewrite complete
+
+**Sections rewritten:**
+
+**Section 6 — Cloudflare (complete rewrite):**
+- "Creating a Cloudflare account": button label corrected ("Start for
+  Free" not "Sign up"); "Under Attack?" button explained and dismissed;
+  Google sign-in option added and recommended; all 6 onboarding
+  questions documented with correct answers; Worker creation wizard
+  correctly identified as something to skip
+- "Finding your Account ID": corrected from "right sidebar" to
+  browser address bar URL method; Notepad instructions added
+- "Navigating to Workers & Pages": corrected from left sidebar item
+  to centre dashboard card; warning added not to click "Start building"
+- "Obtaining a Cloudflare API Token": navigation corrected from
+  profile icon → My Profile to Manage account → Account API tokens;
+  full permissions list documented; Zone Resources two-row configuration
+  fully explained with "+ Add more" step; token name field documented;
+  Client IP / TTL sections documented as leave blank; "Continue to
+  summary" button label confirmed; full permissions summary documented;
+  "View all API tokens" exit button confirmed; credential handling
+  note added (Notepad/password manager only)
+
+**Section 5 — GitHub Desktop (significant additions):**
+- Cloning: parent folder warning added (do not use same name as repo);
+  "No uncommitted changes" success confirmation documented; three-tab
+  clone dialog documented
+- Git terminal alternative: full new subsection added covering terminal
+  opening, "not a git repository" error and fix, four essential
+  commands with table, standard workflow
+
+**Troubleshooting — three new entries:**
+- "not a git repository" error and resolution
+- Nested folder structure and how to work with it
+- git push credential prompt and Personal Access Token solution
+
+**Lost token troubleshooting:** Updated to reflect correct navigation
+path (Manage account → Account API tokens, not profile icon).
+
+**Total corrections applied: 28**
+All live session findings from Entries 041–078 are now reflected
+in the appendix.
+
+---
+
+*Future entries appended below as work continues.*
 
 ---
 
