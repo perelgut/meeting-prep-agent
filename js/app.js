@@ -540,45 +540,34 @@ async function fetchCalendarEvents() {
 
   try {
     const accessToken = await getGoogleAccessToken();
-    const data = await callClaude({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      mcp_servers: [
-        {
-          type: 'url',
-          url: 'https://gcal.mcp.claude.com/mcp',
-          name: 'google-calendar',
-          authorization_token: accessToken,
-        }
-      ],
-      tools: [
-        {
-          type: 'mcp_toolset',
-          mcp_server_name: 'google-calendar',
-        }
-      ],
-      messages: [{
-        role: 'user',
-        content: `List my upcoming calendar events for the next 7 days.
-Return ONLY valid JSON — no markdown, no explanation:
-{
-  "events": [
-    {
-      "id": "unique_id",
-      "title": "Event title",
-      "start": "ISO 8601 datetime",
-      "end": "ISO 8601 datetime",
-      "attendees": "comma separated names or emails",
-      "description": "event description or agenda if present, else empty string"
-    }
-  ]
-}`
-      }],
+
+    const now     = new Date().toISOString();
+    const weekOut = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events` +
+      `?timeMin=${encodeURIComponent(now)}` +
+      `&timeMax=${encodeURIComponent(weekOut)}` +
+      `&singleEvents=true` +
+      `&orderBy=startTime` +
+      `&maxResults=10`;
+
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` }
     });
 
-    const text   = getTextFromResponse(data).replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(text);
-    const events = parsed.events || [];
+    if (!response.ok) {
+      throw new Error(`Google Calendar API error: ${response.status}`);
+    }
+
+    const data   = await response.json();
+    const events = (data.items || []).map(ev => ({
+      id:          ev.id,
+      title:       ev.summary || 'Untitled event',
+      start:       ev.start?.dateTime || ev.start?.date || '',
+      end:         ev.end?.dateTime   || ev.end?.date   || '',
+      attendees:   (ev.attendees || []).map(a => a.displayName || a.email).join(', '),
+      description: ev.description || '',
+    }));
 
     loadingCard.style.display = 'none';
 
