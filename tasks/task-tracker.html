@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Prep Agent — Task Tracker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #f8f7f4;
+    --surface:   #ffffff;
+    --border:    #e2e0d8;
+    --text:      #1a1a18;
+    --muted:     #6b6a64;
+    --info-bg:   #e8f2fc;
+    --info-txt:  #0c447c;
+    --info-bdr:  #b5d4f4;
+    --warn-bg:   #fdf3e0;
+    --warn-txt:  #854f0b;
+    --warn-bdr:  #fac775;
+    --ok-bg:     #eaf3de;
+    --ok-txt:    #27500a;
+    --ok-bdr:    #c0dd97;
+    --block-bg:  #fbeaea;
+    --block-txt: #791f1f;
+    --block-bdr: #f09595;
+    --pill-todo: #d3d1c7;
+    --pill-todo-txt: #444441;
+    --pill-prog: #fac775;
+    --pill-prog-txt: #633806;
+    --pill-done: #c0dd97;
+    --pill-done-txt: #27500a;
+    --pill-block:#f09595;
+    --pill-block-txt:#791f1f;
+  }
+
+  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; padding: 0 0 60px; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 10; }
+  header h1 { font-size: 17px; font-weight: 600; }
+  header p  { font-size: 13px; color: var(--muted); }
+
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stat-pill { font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+  .stat-todo  { background: var(--pill-todo);  color: var(--pill-todo-txt);  }
+  .stat-prog  { background: var(--pill-prog);  color: var(--pill-prog-txt);  }
+  .stat-done  { background: var(--pill-done);  color: var(--pill-done-txt);  }
+  .stat-block { background: var(--pill-block); color: var(--pill-block-txt); }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 24px 0; }
+
+  .phase { margin-bottom: 32px; }
+  .phase-header { display: flex; align-items: center; gap:10px; margin-bottom: 12px; }
+  .phase-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .phase-title { font-size: 14px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+  .phase-desc { font-size: 13px; color: var(--muted); margin-left: auto; }
+
+  .phase-0 .phase-num { background: var(--info-bg); color: var(--info-txt); }
+  .phase-1 .phase-num { background: #eeedfe; color: #3c3489; }
+  .phase-2 .phase-num { background: var(--warn-bg); color: var(--warn-txt); }
+  .phase-3 .phase-num { background: #e1f5ee; color: #085041; }
+  .phase-4 .phase-num { background: var(--ok-bg); color: var(--ok-txt); }
+  .phase-5 .phase-num { background: #fbeaf0; color: #72243e; }
+
+  .task-grid { display: grid; gap: 8px; }
+
+  .task { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; cursor: pointer; transition: border-color 0.15s; }
+  .task:hover { border-color: #c0bdb2; }
+  .task.expanded { border-color: #a0a09a; }
+
+  .task-check { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+  .task[data-status="done"]      .task-check { background: var(--ok-bg);    border-color: var(--ok-bdr);    color: var(--ok-txt); }
+  .task[data-status="progress"]  .task-check { background: var(--warn-bg);  border-color: var(--warn-bdr);  color: var(--warn-txt); }
+  .task[data-status="blocked"]   .task-check { background: var(--block-bg); border-color: var(--block-bdr); color: var(--block-txt); }
+  .task[data-status="todo"]      .task-check { background: transparent; }
+
+  .task-main { min-width: 0; }
+  .task-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+  .task-meta  { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px; }
+  .task-file  { font-family: monospace; font-size: 11px; background: var(--bg); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); }
+
+  .task-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+  .status-pill { font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
+  .pill-todo   { background: var(--pill-todo);  color: var(--pill-todo-txt);  }
+  .pill-prog   { background: var(--pill-prog);  color: var(--pill-prog-txt);  }
+  .pill-done   { background: var(--pill-done);  color: var(--pill-done-txt);  }
+  .pill-block  { background: var(--pill-block); color: var(--pill-block-txt); }
+  .dep-tag { font-size: 11px; color: var(--muted); text-align: right; }
+
+  .task-detail { grid-column: 1 / -1; display: none; border-top: 1px solid var(--border); margin-top: 10px; padding-top: 12px; }
+  .task.expanded .task-detail { display: block; }
+
+  .task-detail p   { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .task-detail ol, .task-detail ul { font-size: 13px; color: var(--text); padding-left: 20px; margin-bottom: 8px; }
+  .task-detail li  { margin-bottom: 4px; }
+  .task-detail code { font-family: monospace; font-size: 12px; background: var(--bg); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border); }
+  .task-detail pre  { font-family: monospace; font-size: 12px; background: var(--bg); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); overflow-x: auto; white-space: pre; margin-bottom: 8px; line-height: 1.5; }
+
+  .status-btns { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .status-btns button { font-size: 12px; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; background: var(--bg); color: var(--text); transition: all 0.1s; }
+  .status-btns button:hover { background: var(--surface); border-color: #a0a09a; }
+  .status-btns button.active-btn { font-weight: 600; }
+
+  .notes-label { font-size: 12px; font-weight: 500; color: var(--muted); margin: 10px 0 4px; display: block; }
+  .notes-area { width: 100%; min-height: 60px; font-size: 13px; font-family: inherit; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; background: var(--bg); color: var(--text); resize: vertical; }
+  .notes-area:focus { outline: none; border-color: #a0a09a; }
+
+  .legend { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 24px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+  .legend span { font-size: 12px; color: var(--muted); }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-btn { font-size: 12px; padding: 4px 14px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; background: var(--surface); color: var(--text); }
+  .filter-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .progress-bar-wrap { background: var(--border); border-radius: 4px; height: 6px; margin: 8px 0 0; overflow: hidden; width: 160px; }
+  .progress-bar-fill { height: 100%; background: var(--ok-txt); border-radius: 4px; transition: width 0.3s; }
+
+  .save-notice { font-size: 12px; color: var(--muted); text-align: center; padding: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Meeting Prep Agent — Implementation Task Tracker</h1>
+    <p>Web application build · GitHub Pages + Cloudflare Worker</p>
+  </div>
+  <div class="stats" id="stats-bar"></div>
+</header>
+
+<div class="container">
+
+  <div class="legend">
+    <span>Status:</span>
+    <div class="legend-item"><span class="status-pill pill-todo">To do</span></div>
+    <div class="legend-item"><span class="status-pill pill-prog">In progress</span></div>
+    <div class="legend-item"><span class="status-pill pill-done">Done</span></div>
+    <div class="legend-item"><span class="status-pill pill-block">Blocked</span></div>
+    <span style="margin-left:auto;font-size:12px">Click any task to expand · Status and notes are saved in your browser</span>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All tasks</button>
+    <button class="filter-btn" onclick="setFilter('todo',this)">To do</button>
+    <button class="filter-btn" onclick="setFilter('progress',this)">In progress</button>
+    <button class="filter-btn" onclick="setFilter('done',this)">Done</button>
+    <button class="filter-btn" onclick="setFilter('blocked',this)">Blocked</button>
+  </div>
+
+  <div id="phases-container"></div>
+
+  <p class="save-notice">Task status and notes are saved automatically in your browser's local storage.<br>They persist between sessions on the same computer.</p>
+</div>
+
+<script>
+const PHASES = [
+  {
+    id: 0, label: "Phase 0", title: "Prerequisites & accounts",
+    desc: "One-time setup — complete before any code",
+    tasks: [
+      {
+        id: "p0-t1", title: "Create GitHub account and repository",
+        file: null, dep: null,
+        detail: `<p>You need a GitHub account and a repository named <code>meeting-prep-agent</code> to store all project files.</p>
+<ol>
+<li>Go to <a href="https://github.com" target="_blank">github.com</a> and sign in (or create a free account).</li>
+<li>Click the <strong>+</strong> icon (top right) → <strong>New repository</strong>.</li>
+<li>Name it exactly: <code>meeting-prep-agent</code></li>
+<li>Set visibility to <strong>Public</strong> (required for free GitHub Pages).</li>
+<li>Check <strong>Add a README file</strong>.</li>
+<li>Click <strong>Create repository</strong>.</li>
+</ol>`
+      },
+      {
+        id: "p0-t2", title: "Enable GitHub Pages on the repository",
+        file: null, dep: "p0-t1",
+        detail: `<p>GitHub Pages will serve your application as a website directly from your repository.</p>
+<ol>
+<li>On your repository page, click <strong>Settings</strong>.</li>
+<li>In the left sidebar, click <strong>Pages</strong>.</li>
+<li>Under <strong>Source</strong>, select <strong>GitHub Actions</strong>.</li>
+<li>Click <strong>Save</strong>.</li>
+</ol>
+<p>Nothing will deploy yet — the deployment workflow is created in Phase 2.</p>`
+      },
+      {
+        id: "p0-t3", title: "Create a Cloudflare account",
+        file: null, dep: null,
+        detail: `<p>Cloudflare Workers will act as a secure proxy between your application and the Anthropic API, keeping your API key out of the browser.</p>
+<ol>
+<li>Go to <a href="https://cloudflare.com" target="_blank">cloudflare.com</a> and click <strong>Sign up</strong>.</li>
+<li>Enter your email and a password. Click <strong>Create account</strong>.</li>
+<li>Verify your email address.</li>
+<li>When asked to add a site, click <strong>Skip for now</strong> — you do not need a domain for Workers.</li>
+<li>In the left sidebar, click <strong>Workers &amp; Pages</strong> to confirm the section is visible.</li>
+</ol>
+<p>The free tier allows 100,000 Worker requests per day — more than sufficient for this project.</p>`
+      },
+      {
+        id: "p0-t4", title: "Get your Anthropic API key",
+        file: null, dep: null,
+        detail: `<p>The Anthropic API key authorises your application to call Claude. It will be stored as a GitHub Secret — never in your code.</p>
+<ol>
+<li>Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> and sign in (or create a free account).</li>
+<li>In the left sidebar, click <strong>API Keys</strong>.</li>
+<li>Click <strong>Create Key</strong>. Give it a name like <code>meeting-prep-agent</code>.</li>
+<li>Copy the key immediately — it will only be shown once.</li>
+<li>Store it temporarily in a secure place (a password manager, not a text file).</li>
+</ol>
+<p><strong>Important:</strong> Never paste this key into any file that will be committed to GitHub.</p>`
+      },
+      {
+        id: "p0-t5", title: "Get your Cloudflare API token",
+        file: null, dep: "p0-t3",
+        detail: `<p>A Cloudflare API token allows GitHub Actions to deploy your Worker automatically on every push.</p>
+<ol>
+<li>Sign in to <a href="https://dash.cloudflare.com" target="_blank">dash.cloudflare.com</a>.</li>
+<li>Click your profile icon (top right) → <strong>My Profile</strong>.</li>
+<li>Click <strong>API Tokens</strong> → <strong>Create Token</strong>.</li>
+<li>Click <strong>Use template</strong> next to <strong>Edit Cloudflare Workers</strong>.</li>
+<li>Leave all settings as default. Click <strong>Continue to summary</strong> → <strong>Create Token</strong>.</li>
+<li>Copy the token — shown only once.</li>
+</ol>`
+      },
+      {
+        id: "p0-t6", title: "Add secrets to GitHub repository",
+        file: null, dep: "p0-t1",
+        detail: `<p>GitHub Secrets store sensitive values that GitHub Actions can use during deployment — they are never visible in your code or logs.</p>
+<ol>
+<li>Go to your repository on GitHub.</li>
+<li>Click <strong>Settings</strong> → <strong>Secrets and variables</strong> → <strong>Actions</strong>.</li>
+<li>Click <strong>New repository secret</strong> and add the following — one at a time:</li>
+</ol>
+<pre>Name: ANTHROPIC_API_KEY
+Value: (paste your Anthropic API key)
+
+Name: CLOUDFLARE_API_TOKEN
+Value: (paste your Cloudflare API token)
+
+Name: CLOUDFLARE_ACCOUNT_ID
+Value: (found in Cloudflare dashboard right sidebar — a 32-char hex string)</pre>
+<p>To find your Cloudflare Account ID: sign in to dash.cloudflare.com → the Account ID appears in the right sidebar of the Home page.</p>`
+      },
+      {
+        id: "p0-t7", title: "Install VS Code and clone repository locally",
+        file: null, dep: "p0-t1",
+        detail: `<p>VS Code is used to write and edit all project files. Cloning downloads the repository to your computer.</p>
+<ol>
+<li>Install VS Code from <a href="https://code.visualstudio.com" target="_blank">code.visualstudio.com</a> if not already installed (see Appendix A).</li>
+<li>Install <strong>GitHub Desktop</strong> from <a href="https://desktop.github.com" target="_blank">desktop.github.com</a>.</li>
+<li>Open GitHub Desktop → <strong>File</strong> → <strong>Clone Repository</strong>.</li>
+<li>Select <code>meeting-prep-agent</code> from the list.</li>
+<li>Choose a local folder (e.g. <code>Documents/meeting-prep-agent</code>).</li>
+<li>Click <strong>Clone</strong>.</li>
+<li>Open VS Code. Click <strong>File</strong> → <strong>Open Folder</strong> → select the cloned folder.</li>
+</ol>`
+      }
+    ]
+  },
+  {
+    id: 1, label: "Phase 1", title: "Repository structure",
+    desc: "Create all folders and placeholder files",
+    tasks: [
+      {
+        id: "p1-t1", title: "Create folder structure in repository",
+        file: "repository root", dep: "p0-t7",
+        detail: `<p>Create the following folders inside your cloned repository using VS Code's Explorer panel (right-click → New Folder):</p>
+<pre>meeting-prep-agent/
+├── css/
+├── js/
+├── worker/
+├── .github/
+│   └── workflows/
+├── docs/
+└── tasks/</pre>
+<p>To create a folder: in the VS Code Explorer, right-click the root folder → <strong>New Folder</strong> → type the name.</p>
+<p>For <code>.github/workflows</code>: create <code>.github</code> first, then right-click it and create <code>workflows</code> inside it.</p>`
+      },
+      {
+        id: "p1-t2", title: "Create index.html (shell)",
+        file: "index.html", dep: "p1-t1",
+        detail: `<p>Create <code>index.html</code> in the repository root. This is the main application page.</p>
+<p>In VS Code: right-click the root folder → <strong>New File</strong> → type <code>index.html</code>. Paste the starter content from the implementation instructions (Section 3.2).</p>`
+      },
+      {
+        id: "p1-t3", title: "Create css/styles.css",
+        file: "css/styles.css", dep: "p1-t1",
+        detail: `<p>Create <code>styles.css</code> inside the <code>css</code> folder. This file contains all visual styling for the application.</p>
+<p>In VS Code: right-click the <code>css</code> folder → <strong>New File</strong> → type <code>styles.css</code>.</p>`
+      },
+      {
+        id: "p1-t4", title: "Create js/app.js, js/api.js, js/docx-export.js",
+        file: "js/", dep: "p1-t1",
+        detail: `<p>Create three JavaScript files inside the <code>js</code> folder:</p>
+<ul>
+<li><code>app.js</code> — manages all UI state and user interactions</li>
+<li><code>api.js</code> — all calls to the Cloudflare Worker proxy</li>
+<li><code>docx-export.js</code> — converts the briefing into a .docx file</li>
+</ul>
+<p>Create each by right-clicking the <code>js</code> folder → <strong>New File</strong>.</p>`
+      },
+      {
+        id: "p1-t5", title: "Create worker/proxy.js",
+        file: "worker/proxy.js", dep: "p1-t1",
+        detail: `<p>Create <code>proxy.js</code> inside the <code>worker</code> folder. This is the Cloudflare Worker that holds the API key and proxies requests to Anthropic.</p>
+<p>This file will be deployed to Cloudflare automatically by GitHub Actions — it does not run on your computer.</p>`
+      },
+      {
+        id: "p1-t6", title: "Copy documentation files into docs/",
+        file: "docs/", dep: "p1-t1",
+        detail: `<p>Copy the three project documentation files into the <code>docs</code> folder so they live in the repository:</p>
+<ul>
+<li><code>PROJECT_DOCUMENTATION.md</code></li>
+<li><code>PROJECT_PLAN.md</code></li>
+<li><code>APPENDIX_SOFTWARE_TECHNOLOGIES.md</code></li>
+</ul>
+<p>Copy this task tracker file (<code>task-tracker.html</code>) into the <code>tasks</code> folder.</p>`
+      },
+      {
+        id: "p1-t7", title: "First commit and push to GitHub",
+        file: null, dep: "p1-t6",
+        detail: `<p>Save your initial structure to GitHub before writing any code.</p>
+<ol>
+<li>Open <strong>GitHub Desktop</strong>.</li>
+<li>You will see all new files listed under <strong>Changes</strong>.</li>
+<li>In the <strong>Summary</strong> field (bottom left), type: <code>Initial repository structure</code></li>
+<li>Click <strong>Commit to main</strong>.</li>
+<li>Click <strong>Push origin</strong> (top right).</li>
+<li>Go to your repository on github.com and confirm the files are visible.</li>
+</ol>`
+      }
+    ]
+  },
+  {
+    id: 2, label: "Phase 2", title: "Cloudflare Worker proxy",
+    desc: "Secure API key proxy — deployed automatically",
+    tasks: [
+      {
+        id: "p2-t1", title: "Write worker/proxy.js",
+        file: "worker/proxy.js", dep: "p1-t5",
+        detail: `<p>The Worker receives requests from your browser app, adds the Anthropic API key, and forwards them to the Anthropic API. The key never leaves Cloudflare's servers.</p>
+<p>Paste the following into <code>worker/proxy.js</code>:</p>
+<pre>export default {
+  async fetch(request, env) {
+    // Allow CORS from GitHub Pages domain
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    };
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 });
+    }
+
+    const body = await request.json();
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+    return new Response(JSON.stringify(data), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+};</pre>`
+      },
+      {
+        id: "p2-t2", title: "Create .github/workflows/deploy-worker.yml",
+        file: ".github/workflows/deploy-worker.yml", dep: "p0-t6",
+        detail: `<p>This GitHub Actions workflow automatically deploys your Cloudflare Worker every time you push changes to the <code>main</code> branch.</p>
+<p>Create the file <code>deploy-worker.yml</code> inside <code>.github/workflows/</code> and paste:</p>
+<pre>name: Deploy Cloudflare Worker
+
+on:
+  push:
+    branches: [main]
+    paths: ['worker/**']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy worker/proxy.js --name meeting-prep-proxy --compatibility-date 2024-01-01
+
+      - name: Set Worker Secret
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: secret put ANTHROPIC_API_KEY --name meeting-prep-proxy
+        env:
+          ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}</pre>`
+      },
+      {
+        id: "p2-t3", title: "Commit, push, and verify Worker deployment",
+        file: null, dep: "p2-t2",
+        detail: `<ol>
+<li>Save both files in VS Code.</li>
+<li>In GitHub Desktop: commit with message <code>Add Cloudflare Worker proxy and deployment workflow</code>.</li>
+<li>Push to main.</li>
+<li>On GitHub: click the <strong>Actions</strong> tab. You should see <strong>Deploy Cloudflare Worker</strong> running.</li>
+<li>Wait for it to show a green checkmark. If it fails, click the run to see the error log.</li>
+<li>Go to <a href="https://dash.cloudflare.com" target="_blank">dash.cloudflare.com</a> → <strong>Workers &amp; Pages</strong>. You should see <code>meeting-prep-proxy</code> listed.</li>
+<li>Note your Worker URL — it will look like: <code>https://meeting-prep-proxy.YOUR-SUBDOMAIN.workers.dev</code><br>You will need this URL in Phase 3.</li>
+</ol>`
+      }
+    ]
+  },
+  {
+    id: 3, label: "Phase 3", title: "Frontend — HTML &amp; CSS",
+    desc: "The application shell and all styling",
+    tasks: [
+      {
+        id: "p3-t1", title: "Write index.html",
+        file: "index.html", dep: "p1-t2",
+        detail: `<p>The main HTML file defines the full structure of the application. It references the CSS and JS files and loads the docx.js library from CDN.</p>
+<p>Full content provided in Implementation Instructions Section 3.2.</p>
+<p>Key elements to include:</p>
+<ul>
+<li>Step indicator (Meeting details / Clarification / Research queue / Briefing)</li>
+<li>Mode toggle (Manual entry — Calendar is a future enhancement)</li>
+<li>Meeting details form: title, date/time, attendees, agenda</li>
+<li>Private context text area (amber styled, clearly labelled)</li>
+<li>Clarification batch panel (hidden until Phase 1 API returns)</li>
+<li>Research queue container (hidden until clarification resolved)</li>
+<li>Briefing output panel with collapsible sections</li>
+<li>Download .docx button</li>
+<li>CDN script tag for docx.js</li>
+</ul>`
+      },
+      {
+        id: "p3-t2", title: "Write css/styles.css",
+        file: "css/styles.css", dep: "p1-t3",
+        detail: `<p>All visual styling for the application. Full content provided in Implementation Instructions Section 3.3.</p>
+<p>Key styles to include:</p>
+<ul>
+<li>CSS custom properties (variables) for all colours</li>
+<li>Step indicator styling</li>
+<li>Mode toggle buttons</li>
+<li>Form inputs and labels</li>
+<li>Private context panel (amber/warning colour scheme)</li>
+<li>Topic cards with status states</li>
+<li>Action buttons (Investigate / Not a match / Postpone)</li>
+<li>Status pills (To do / In progress / Done)</li>
+<li>Briefing section collapsible cards</li>
+<li>Progress bar</li>
+<li>Responsive layout for mobile</li>
+</ul>`
+      }
+    ]
+  },
+  {
+    id: 4, label: "Phase 4", title: "Frontend — JavaScript",
+    desc: "Application logic, API calls, document generation",
+    tasks: [
+      {
+        id: "p4-t1", title: "Write js/api.js — proxy call function",
+        file: "js/api.js", dep: "p2-t3",
+        detail: `<p>All Anthropic API calls go through this file. It sends requests to your Cloudflare Worker, which forwards them to Anthropic with the API key attached.</p>
+<p>Full content in Implementation Instructions Section 4.1.</p>
+<p>Key functions:</p>
+<ul>
+<li><code>callClaude(payload)</code> — sends a POST request to the Worker URL, returns the parsed response</li>
+<li><code>WORKER_URL</code> constant — set this to your Worker URL from Phase 2, Step 3</li>
+</ul>
+<p>Replace <code>YOUR-WORKER-URL</code> with the actual URL noted in Phase 2, Step 3.</p>`
+      },
+      {
+        id: "p4-t2", title: "Write js/app.js — Phase 1: topic discovery",
+        file: "js/app.js", dep: "p4-t1",
+        detail: `<p>The first major function in app.js: collect meeting details, build the discovery prompt, call the API, and render the topic cards.</p>
+<p>Full content in Implementation Instructions Section 4.2.</p>
+<p>Key functions:</p>
+<ul>
+<li><code>getMeetingDetails()</code> — reads all form fields into an object</li>
+<li><code>runDiscovery()</code> — builds the Phase 1 prompt, calls <code>callClaude()</code>, parses JSON response</li>
+<li><code>renderTopicCards(topics)</code> — creates a card element per topic</li>
+<li><code>renderClarificationCards(clarifications)</code> — creates upfront batch panel cards</li>
+</ul>`
+      },
+      {
+        id: "p4-t3", title: "Write js/app.js — Phase 2: research queue",
+        file: "js/app.js", dep: "p4-t2",
+        detail: `<p>The research queue loop: investigate / discard / postpone logic, per-topic API calls, result display, postponed round.</p>
+<p>Full content in Implementation Instructions Section 4.3.</p>
+<p>Key functions:</p>
+<ul>
+<li><code>investigateTopic(topic)</code> — calls API with web_search, displays result on card</li>
+<li><code>discardTopic(id)</code> — marks topic discarded, updates state</li>
+<li><code>postponeTopic(id)</code> — moves topic to postponed list</li>
+<li><code>checkQueueComplete()</code> — checks termination conditions, shows postponed round or proceeds to Phase 3</li>
+<li><code>showPostponedRound()</code> — re-presents postponed topics</li>
+</ul>`
+      },
+      {
+        id: "p4-t4", title: "Write js/app.js — Phase 3: briefing synthesis",
+        file: "js/app.js", dep: "p4-t3",
+        detail: `<p>The final API call: pass all research results to Claude and render the 5-section briefing.</p>
+<p>Full content in Implementation Instructions Section 4.4.</p>
+<p>Key functions:</p>
+<ul>
+<li><code>runSynthesis()</code> — builds synthesis prompt with all results, calls API, parses sections</li>
+<li><code>renderBriefing(sections)</code> — creates collapsible section cards</li>
+<li><code>toggleSection(num)</code> — expand/collapse a briefing section</li>
+</ul>`
+      },
+      {
+        id: "p4-t5", title: "Write js/docx-export.js",
+        file: "js/docx-export.js", dep: "p4-t4",
+        detail: `<p>Converts the briefing text into a properly formatted Word document and triggers a browser download.</p>
+<p>Full content in Implementation Instructions Section 4.5.</p>
+<p>Key functions:</p>
+<ul>
+<li><code>generateDocx(meetingTitle, sections)</code> — builds docx Document object from briefing sections</li>
+<li>Uses <code>Packer.toBlob()</code> → <code>URL.createObjectURL()</code> → programmatic anchor click</li>
+<li>File saved as <code>meeting-briefing-[title].docx</code></li>
+</ul>`
+      }
+    ]
+  },
+  {
+    id: 5, label: "Phase 5", title: "GitHub Pages deployment",
+    desc: "Automated deployment — live on the web",
+    tasks: [
+      {
+        id: "p5-t1", title: "Create .github/workflows/deploy-pages.yml",
+        file: ".github/workflows/deploy-pages.yml", dep: "p0-t2",
+        detail: `<p>This workflow deploys the frontend to GitHub Pages every time you push to <code>main</code>.</p>
+<p>Create the file and paste:</p>
+<pre>name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4</pre>`
+      },
+      {
+        id: "p5-t2", title: "Set Worker URL in js/api.js",
+        file: "js/api.js", dep: "p2-t3",
+        detail: `<p>Before final deployment, make sure the <code>WORKER_URL</code> constant in <code>js/api.js</code> is set to your actual Cloudflare Worker URL.</p>
+<p>Open <code>js/api.js</code> and confirm the first line reads:</p>
+<pre>const WORKER_URL = 'https://meeting-prep-proxy.YOUR-SUBDOMAIN.workers.dev';</pre>
+<p>Replace <code>YOUR-SUBDOMAIN</code> with your actual Cloudflare subdomain (visible on the Worker page in the Cloudflare dashboard).</p>`
+      },
+      {
+        id: "p5-t3", title: "Final commit, push, and verify live deployment",
+        file: null, dep: "p5-t1",
+        detail: `<ol>
+<li>Save all files in VS Code.</li>
+<li>In GitHub Desktop: commit with message <code>Complete web application — ready for deployment</code>.</li>
+<li>Push to main.</li>
+<li>On GitHub: click the <strong>Actions</strong> tab. Watch both workflows run:<br>
+   — <strong>Deploy Cloudflare Worker</strong> (if worker/ changed)<br>
+   — <strong>Deploy to GitHub Pages</strong></li>
+<li>When both show green checkmarks, visit your GitHub Pages URL:<br>
+   <code>https://YOUR-USERNAME.github.io/meeting-prep-agent</code></li>
+<li>Test the full application flow end to end.</li>
+</ol>`
+      },
+      {
+        id: "p5-t4", title: "End-to-end testing",
+        file: null, dep: "p5-t3",
+        detail: `<p>Test each of the following before declaring the application complete:</p>
+<ul>
+<li>Manual entry form accepts all fields</li>
+<li>Private context field is visually distinct and correctly labelled</li>
+<li>"Identify research topics" button triggers API call and renders topic cards</li>
+<li>Investigate Now: spinner shows, result appears on card, card fades</li>
+<li>Not a Match: card fades immediately</li>
+<li>Postpone: card fades, re-appears in postponed round after initial queue clears</li>
+<li>Termination: completion banner appears when queue is exhausted</li>
+<li>"Generate briefing" triggers synthesis, sections render and expand/collapse</li>
+<li>"Download .docx" produces a valid Word file with all 5 sections</li>
+<li>Application works on Chrome, Firefox, and Safari</li>
+<li>Application is usable on a mobile phone screen</li>
+</ul>`
+      }
+    ]
+  }
+];
+
+const STATUSES = { todo: 'To do', progress: 'In progress', done: 'Done', blocked: 'Blocked' };
+const PILL_CLASS = { todo: 'pill-todo', progress: 'pill-prog', done: 'pill-done', blocked: 'pill-block' };
+const CHECK_SYMBOL = { todo: '', progress: '–', done: '✓', blocked: '!' };
+
+let filter = 'all';
+
+function load(id, key, def) {
+  try { return localStorage.getItem('mpa-' + id + '-' + key) || def; } catch { return def; }
+}
+function save(id, key, val) {
+  try { localStorage.setItem('mpa-' + id + '-' + key, val); } catch {}
+}
+
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+function renderAll() {
+  const container = document.getElementById('phases-container');
+  container.innerHTML = '';
+  PHASES.forEach(ph => {
+    const visible = ph.tasks.filter(t => filter === 'all' || load(t.id, 'status', 'todo') === filter);
+    if (visible.length === 0 && filter !== 'all') return;
+    const div = document.createElement('div');
+    div.className = 'phase phase-' + ph.id;
+    div.innerHTML = `<div class="phase-header">
+      <div class="phase-num">${ph.label.split(' ')[1]}</div>
+      <span class="phase-title">${ph.title}</span>
+      <span class="phase-desc">${ph.desc}</span>
+    </div><div class="task-grid" id="grid-${ph.id}"></div>`;
+    container.appendChild(div);
+    const grid = document.getElementById('grid-' + ph.id);
+    ph.tasks.forEach(t => {
+      if (filter !== 'all' && load(t.id, 'status', 'todo') !== filter) return;
+      grid.appendChild(makeTask(t));
+    });
+  });
+  updateStats();
+}
+
+function makeTask(t) {
+  const status = load(t.id, 'status', 'todo');
+  const notes  = load(t.id, 'notes', '');
+  const expanded = load(t.id, 'open', 'false') === 'true';
+
+  const div = document.createElement('div');
+  div.className = 'task' + (expanded ? ' expanded' : '');
+  div.dataset.status = status;
+  div.dataset.id = t.id;
+
+  const depHtml = t.dep ? `<span class="dep-tag">Needs: ${t.dep}</span>` : '';
+  const fileHtml = t.file ? `<span class="task-file">${t.file}</span>` : '';
+
+  div.innerHTML = `
+    <div class="task-check">${CHECK_SYMBOL[status]}</div>
+    <div class="task-main">
+      <div class="task-title">${t.title}</div>
+      <div class="task-meta">${fileHtml}</div>
+    </div>
+    <div class="task-right">
+      <span class="status-pill ${PILL_CLASS[status]}">${STATUSES[status]}</span>
+      ${depHtml}
+    </div>
+    <div class="task-detail">
+      ${t.detail}
+      <div class="status-btns">
+        <span style="font-size:12px;color:var(--muted);align-self:center;margin-right:4px">Status:</span>
+        ${Object.entries(STATUSES).map(([k,v]) =>
+          `<button onclick="setStatus('${t.id}',event,'${k}')" class="${status===k?'active-btn':''}">${v}</button>`
+        ).join('')}
+      </div>
+      <label class="notes-label">Notes</label>
+      <textarea class="notes-area" placeholder="Add notes, observations, or blockers…" oninput="saveNotes('${t.id}',this.value)">${notes}</textarea>
+    </div>`;
+
+  div.addEventListener('click', (e) => {
+    if (e.target.closest('.status-btns') || e.target.closest('.notes-area')) return;
+    div.classList.toggle('expanded');
+    save(t.id, 'open', div.classList.contains('expanded') ? 'true' : 'false');
+  });
+
+  return div;
+}
+
+function setStatus(id, e, status) {
+  e.stopPropagation();
+  save(id, 'status', status);
+  renderAll();
+}
+
+function saveNotes(id, val) {
+  save(id, 'notes', val);
+}
+
+function updateStats() {
+  const all = PHASES.flatMap(p => p.tasks);
+  const counts = { todo: 0, progress: 0, done: 0, blocked: 0 };
+  all.forEach(t => { counts[load(t.id, 'status', 'todo')]++; });
+  const total = all.length;
+  const donePct = Math.round((counts.done / total) * 100);
+  document.getElementById('stats-bar').innerHTML = `
+    <span class="stat-pill stat-todo">${counts.todo} to do</span>
+    <span class="stat-pill stat-prog">${counts.progress} in progress</span>
+    <span class="stat-pill stat-done">${counts.done} done</span>
+    ${counts.blocked ? `<span class="stat-pill stat-block">${counts.blocked} blocked</span>` : ''}
+    <span style="font-size:12px;color:var(--muted);align-self:center">${donePct}% complete</span>`;
+}
+
+renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+Building an AI Agent to Prepare You for Meetings
+
+What one development diary reveals about the surprisingly human process of building a useful AI agent
+
+Modern work is built on meetings.
+
+Strategy meetings. Project meetings. Budget meetings. Meetings to prepare for other meetings.
+
+Yet most people walk into them half prepared—armed with fragments of information, vague recollections of past discussions, and a quick glance at the calendar invitation.
+
+What if software could do the preparation for you?
+
+That was the idea behind an experimental project called the Meeting Prep Agent. The concept was straightforward: take the details of an upcoming meeting, search for relevant news and background information, analyze previous discussions, and produce a briefing document before you even step into the room.
+
+But as the development diary of the project reveals, turning that simple concept into a working AI agent required far more than clever programming.
+
+It required something much harder: figuring out how machines and humans should think together.
+
+The Simple Idea That Wasn’t Simple
+
+The project began with a brainstorming exercise.
+
+Seven possible AI agents were proposed: tools to triage email, analyze job postings, manage expenses, and perform other common office tasks. But one concept stood out immediately. Meetings are universal—and preparation is almost always rushed.
+
+A system that could prepare a user for a meeting had clear appeal. If it worked, it would save time and reduce the anxiety of walking into a discussion without the full picture.
+
+The initial plan seemed manageable.
+
+The agent would read the calendar entry for a meeting. It would gather background information from online sources, identify recent news related to the meeting topic, and generate a concise briefing document. Ideally, the result would look like something an executive assistant might prepare: a short report summarizing key issues, participants, and recent developments.
+
+On paper, the architecture looked clean and logical.
+
+In practice, the first hours of development quickly revealed how many assumptions were hiding inside that “simple” idea.
+
+Early Experiments
+
+The first visible milestone was the user interface.
+
+A basic screen allowed a user to select a meeting from their calendar or enter meeting details manually. Options appeared to choose what should be included in the briefing—background information, recent news, participant analysis.
+
+There was even a button labeled Generate Briefing Document.
+
+At that stage, nothing particularly intelligent was happening. The interface was mostly scaffolding: a shell waiting for the real intelligence to be connected behind it.
+
+But even this early prototype revealed something important. Meetings rarely revolve around a single cleanly defined topic. They are bundles of agenda items, side discussions, and unresolved issues.
+
+That realization forced the first major redesign.
+
+A Research Problem
+
+The earliest plan called for a single research pass: search the web for recent news related to the meeting topic.
+
+But almost immediately, that approach proved inadequate.
+
+A meeting about a project update might involve several issues at once—technical problems, budget concerns, staffing decisions. Treating it as a single subject would miss too much context.
+
+So the research process was expanded. Instead of performing one search, the agent would investigate each agenda item separately. Multiple lines of inquiry could run in parallel, each producing its own findings.
+
+Another complication appeared as the team considered how the system should use past meeting records.
+
+At first the solution seemed obvious: match previous meetings using keywords. But that quickly proved unreliable. Two meetings might use completely different language to discuss the same underlying issue.
+
+The solution was to match meetings by meaning, not just words—a technique sometimes called semantic similarity. In effect, the AI would try to determine whether two discussions were about the same idea even if they used different terminology.
+
+The system’s research engine had quietly evolved from a simple search tool into something more ambitious: a process that attempted to understand context.
+
+Keeping Humans in the Loop
+
+As the design became more sophisticated, the developers faced a philosophical decision.
+
+Should the AI run the entire research process on its own?
+
+The answer, surprisingly, was no.
+
+Instead of complete automation, the project adopted what developers call a human-in-the-loop approach. The AI would propose research topics—but the user would approve them.
+
+Each potential topic would appear in an interactive queue. The user could choose to investigate it immediately, dismiss it as irrelevant, or postpone it for later.
+
+This decision reflected a deeper insight about AI systems. Machines are excellent at generating possibilities. Humans are still better at judging which possibilities matter.
+
+By designing the agent this way, the project deliberately positioned AI as a collaborator rather than a replacement for human judgment.
+
+A Sudden Documentation Crisis
+
+One of the most unexpected turning points had nothing to do with code.
+
+It had to do with documentation.
+
+As development accelerated, design decisions were being made faster than they were being recorded. Architectural changes were appearing in technical documents—but the reasoning behind them was disappearing into conversation.
+
+For a project intended to demonstrate thoughtful AI development, that gap mattered.
+
+So the team imposed a strict rule: the development diary would become the project’s highest priority.
+
+Every design change, every discussion, every insight had to be recorded immediately.
+
+The directive was blunt and uncompromising. The diary had to remain current after every exchange—no exceptions.
+
+From that moment forward, the project was being built in two forms simultaneously: the software itself, and the written story of how it came into existence.
+
+Designing for Real Users
+
+Another decision soon revealed how quickly technical plans can collide with practical reality.
+
+Originally, the system was intended to run on three platforms: Windows, macOS, and Chromebooks configured to run Linux.
+
+But Chromebook support came with complications. Users would have to enable Linux environments and install development tools—steps that could intimidate newcomers.
+
+Since the project was meant to show how accessible AI-assisted development could be, those barriers undermined the goal.
+
+The decision was reversed. Chromebook support was dropped entirely.
+
+The agent would focus on the two platforms most users already understood: Windows and macOS.
+
+It was a small adjustment in code, but a large shift in philosophy. The project wasn’t just about building a clever AI system—it was about building one that ordinary users could actually try.
+
+When the AI Asked an Unusual Question
+
+Late in the design process, a feature appeared that changed the personality of the entire system.
+
+Users would be given a field labeled Private Context.
+
+Here they could describe what they believed the meeting was really about.
+
+Not the official title. The real purpose.
+
+Perhaps the project was behind schedule. Perhaps a department was facing budget pressure. Perhaps a routine review meeting was quietly preparing for a difficult decision.
+
+The agent would use this interpretation as a lens when performing its research. It might examine past discussions differently, look for specific developments, or suggest additional information to gather.
+
+But the context itself would remain invisible in the final report.
+
+The briefing document would appear neutral and objective—while quietly shaped by the user’s private understanding of the situation.
+
+In effect, the AI behaved like a trusted advisor who had been briefed confidentially before the meeting began.
+
+What the Project Revealed
+
+By the end of the development session, the prototype could already demonstrate key parts of the vision.
+
+A user could connect their calendar, select an upcoming meeting, and allow the system to populate the meeting details automatically. The agent would propose research topics, gather information from external sources, and begin assembling a structured briefing document.
+
+But the most interesting lessons of the project had little to do with programming techniques.
+
+They had to do with how people work.
+
+The diary reveals that building useful AI is rarely about creating a fully autonomous machine. Instead, it involves designing systems that cooperate with human judgment—offering suggestions, organizing information, and helping users see patterns they might otherwise miss.
+
+The Meeting Prep Agent didn’t eliminate the human role in preparation.
+
+It amplified it.
+
+And perhaps that is the most revealing insight hidden in the project’s meticulous diary. The future of AI in everyday work may not be about machines replacing human thought.
+
+It may be about building tools that help us think more clearly before we walk into the room.

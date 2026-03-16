@@ -1,0 +1,801 @@
+/* ─────────────────────────────────────────────────────────────
+   Meeting Prep Agent — styles.css
+   All visual styling for the web application.
+   Organised in sections matching the HTML structure.
+───────────────────────────────────────────────────────────── */
+
+/* ── 1. CSS Custom Properties (design tokens) ────────────── */
+:root {
+  --bg:           #f8f7f4;
+  --surface:      #ffffff;
+  --border:       #e2e0d8;
+  --border-focus: #a0a09a;
+  --text:         #1a1a18;
+  --muted:        #6b6a64;
+  --hint:         #9b9a94;
+
+  /* Info (blue) */
+  --info-bg:      #e8f2fc;
+  --info-txt:     #0c447c;
+  --info-bdr:     #b5d4f4;
+
+  /* Warning / private context (amber) */
+  --warn-bg:      #fdf3e0;
+  --warn-txt:     #854f0b;
+  --warn-bdr:     #fac775;
+
+  /* Success (green) */
+  --ok-bg:        #eaf3de;
+  --ok-txt:       #27500a;
+  --ok-bdr:       #c0dd97;
+
+  /* Danger / blocked (red) */
+  --err-bg:       #fbeaea;
+  --err-txt:      #791f1f;
+  --err-bdr:      #f09595;
+
+  /* Tags */
+  --tag-news-bg:   #e8f2fc;  --tag-news-txt:   #0c447c;
+  --tag-att-bg:    #eaf3de;  --tag-att-txt:    #27500a;
+  --tag-past-bg:   #fdf3e0;  --tag-past-txt:   #854f0b;
+  --tag-ctx-bg:    #fbeafa;  --tag-ctx-txt:    #6b1a6b;
+  --tag-agenda-bg: #f1efe8;  --tag-agenda-txt: #444441;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* ── 2. Reset and base ────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+  padding-bottom: 80px;
+}
+
+/* ── 3. Header ────────────────────────────────────────────── */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-card);
+}
+
+.header-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--info-bg);
+  color: var(--info-txt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app-header h1 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.header-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* ── 4. Main container ────────────────────────────────────── */
+.container {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px 24px 0;
+}
+
+/* ── 5. Step indicator ────────────────────────────────────── */
+.step-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--hint);
+}
+
+.step-item.active {
+  color: var(--info-txt);
+  font-weight: 500;
+}
+
+.step-item.done {
+  color: var(--ok-txt);
+}
+
+.step-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
+}
+
+.step-item.active .step-dot {
+  background: var(--info-bg);
+  color: var(--info-txt);
+}
+
+.step-item.done .step-dot {
+  background: var(--ok-bg);
+  color: var(--ok-txt);
+}
+
+.step-sep {
+  font-size: 13px;
+  color: var(--hint);
+}
+
+/* ── 6. Cards ─────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-card);
+}
+
+.card-private {
+  border-color: var(--warn-bdr);
+}
+
+.card-warn {
+  border-color: var(--warn-bdr);
+  background: var(--warn-bg);
+}
+
+.card-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.card-label-warn {
+  color: var(--warn-txt);
+}
+
+/* ── 7. Form elements ─────────────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 520px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.form-group:last-child { margin-bottom: 0; }
+
+label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.label-hint {
+  font-weight: 400;
+  color: var(--hint);
+  font-size: 12px;
+}
+
+input[type="text"],
+input[type="datetime-local"],
+textarea {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.15s;
+  resize: vertical;
+}
+
+input[type="text"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus {
+  border-color: var(--border-focus);
+  background: var(--surface);
+}
+
+/* Private context textarea — amber border */
+#f-context {
+  border-color: var(--warn-bdr);
+}
+
+#f-context:focus {
+  border-color: var(--warn-txt);
+}
+
+/* ── 8. Private context panel ────────────────────────────── */
+.private-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.lock-icon {
+  color: var(--warn-txt);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.private-note {
+  font-size: 12px;
+  color: var(--warn-txt);
+  margin-bottom: 0;
+  margin-top: 3px;
+}
+
+.private-footer {
+  font-size: 11px;
+  color: var(--warn-txt);
+  opacity: 0.75;
+  margin-top: 8px;
+}
+
+/* ── 9. Buttons ───────────────────────────────────────────── */
+.btn-primary {
+  width: 100%;
+  padding: 13px 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--info-txt);
+  background: var(--info-bg);
+  border: 1px solid var(--info-bdr);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-bottom: 14px;
+}
+
+.btn-primary:hover  { opacity: 0.85; }
+.btn-primary:active { opacity: 0.7;  }
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-success {
+  padding: 11px 28px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ok-txt);
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-bdr);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-success:hover { opacity: 0.85; }
+
+.btn-download {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ok-txt);
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-bdr);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.btn-download:hover { opacity: 0.85; }
+
+/* ── 10. Section / phase labels ──────────────────────────── */
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.section-desc {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.count-badge {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.no-items {
+  font-size: 14px;
+  color: var(--muted);
+  padding: 10px 0;
+}
+
+/* ── 11. Meeting context bar ──────────────────────────────── */
+.meeting-bar {
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.meeting-bar strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.bar-sep {
+  color: var(--hint);
+}
+
+.private-active {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--warn-txt);
+}
+
+/* ── 12. Topic tags ───────────────────────────────────────── */
+.topic-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.tag-news   { background: var(--tag-news-bg);   color: var(--tag-news-txt);   }
+.tag-att    { background: var(--tag-att-bg);    color: var(--tag-att-txt);    }
+.tag-past   { background: var(--tag-past-bg);   color: var(--tag-past-txt);   }
+.tag-ctx    { background: var(--tag-ctx-bg);    color: var(--tag-ctx-txt);    }
+.tag-agenda { background: var(--tag-agenda-bg); color: var(--tag-agenda-txt); }
+
+/* ── 13. Topic cards ──────────────────────────────────────── */
+.topic-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  transition: opacity 0.25s;
+}
+
+.topic-card.faded {
+  opacity: 0.45;
+}
+
+.card-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card-body { flex: 1; min-width: 0; }
+
+.card-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  flex-wrap: wrap;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.card-rationale {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  transition: background 0.1s;
+}
+
+.action-btn.inv {
+  border-color: var(--info-bdr);
+  color: var(--info-txt);
+}
+
+.action-btn.inv:hover { background: var(--info-bg); }
+
+.action-btn.dis {
+  border-color: var(--err-bdr);
+  color: var(--err-txt);
+}
+
+.action-btn.dis:hover { background: var(--err-bg); }
+
+.action-btn.pst {
+  border-color: var(--warn-bdr);
+  color: var(--warn-txt);
+}
+
+.action-btn.pst:hover { background: var(--warn-bg); }
+
+/* ── 14. Investigation loading and results ────────────────── */
+.inv-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 6px 0;
+}
+
+.result-box {
+  display: none;
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-top: 10px;
+  line-height: 1.6;
+  border: 1px solid var(--border);
+}
+
+/* ── 15. Status pills ─────────────────────────────────────── */
+.status-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.status-pill.hidden { display: none; }
+
+.pill-done  { background: var(--ok-bg);   color: var(--ok-txt);   }
+.pill-prog  { background: var(--info-bg); color: var(--info-txt); }
+.pill-warn  { background: var(--warn-bg); color: var(--warn-txt); }
+.pill-muted { background: var(--bg);      color: var(--muted);    border: 1px solid var(--border); }
+.pill-block { background: var(--err-bg);  color: var(--err-txt);  }
+
+/* ── 16. Clarification request cards ─────────────────────── */
+.clarif-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.clarif-card.resolved {
+  opacity: 0.45;
+}
+
+.clarif-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.clarif-reason {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.upload-area {
+  border: 1px dashed var(--border-focus);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  background: var(--bg);
+  margin-top: 10px;
+}
+
+.upload-area label {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.upload-area input[type="file"] {
+  font-size: 13px;
+  margin-bottom: 8px;
+  display: block;
+  width: 100%;
+}
+
+.upload-area textarea {
+  min-height: 72px;
+}
+
+.upload-confirm {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ── 17. Complete banner ──────────────────────────────────── */
+.complete-banner {
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-bdr);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.complete-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ok-txt);
+  margin-bottom: 6px;
+}
+
+.complete-summary {
+  font-size: 13px;
+  color: var(--ok-txt);
+  opacity: 0.8;
+  margin-bottom: 16px;
+}
+
+/* ── 18. Briefing header ──────────────────────────────────── */
+.briefing-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.briefing-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.briefing-date {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* ── 19. Briefing section cards ──────────────────────────── */
+.section-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  background: var(--bg);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid transparent;
+}
+
+.section-header:hover {
+  background: var(--surface);
+}
+
+.section-card:has(.section-body[style*="block"]) .section-header {
+  border-bottom-color: var(--border);
+  background: var(--surface);
+}
+
+.section-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--info-bg);
+  color: var(--info-txt);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+}
+
+.chevron {
+  font-size: 12px;
+  color: var(--hint);
+  transition: transform 0.2s;
+  margin-left: auto;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+.section-body {
+  padding: 16px 18px;
+  background: var(--surface);
+}
+
+.section-body ul {
+  list-style: none;
+  padding: 0;
+}
+
+.section-body li {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.65;
+  padding: 5px 0 5px 18px;
+  position: relative;
+  border-bottom: 1px solid var(--bg);
+}
+
+.section-body li:last-child {
+  border-bottom: none;
+}
+
+.section-body li::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 13px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--info-bdr);
+}
+
+/* ── 20. Synthesis loading ────────────────────────────────── */
+.synth-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  font-size: 14px;
+  color: var(--muted);
+  justify-content: center;
+}
+
+/* ── 21. Error message ────────────────────────────────────── */
+.error-msg {
+  background: var(--err-bg);
+  border: 1px solid var(--err-bdr);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--err-txt);
+}
+
+/* ── 22. Spinner ──────────────────────────────────────────── */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--info-txt);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── 23. Utility ──────────────────────────────────────────── */
+.hidden {
+  display: none !important;
+}
+
+/* ── 24. Responsive ───────────────────────────────────────── */
+@media (max-width: 640px) {
+  .container { padding: 16px 14px 0; }
+  .app-header { padding: 14px 16px; }
+  .app-header h1 { font-size: 15px; }
+  .card { padding: 16px 14px; }
+  .briefing-header { flex-direction: column; }
+  .btn-download { width: 100%; justify-content: center; }
+  .step-bar { gap: 4px; }
+  .step-item span { display: none; }
+  .step-item.active span { display: inline; }
+}
