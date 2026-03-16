@@ -27,6 +27,7 @@ const state = {
   postponed: [],
   calendarOffset: 0,
   calendarAccessToken: null,
+  calendarEvents: {},
 };
 
 // ── Helper: read all form fields ───────────────────
@@ -593,7 +594,10 @@ async function fetchCalendarEvents(append = false) {
     if (events.length === 0 && !append) {
       eventList.innerHTML = '<p class="no-items">No events found in this period.</p>';
     } else {
-      events.forEach(ev => eventList.appendChild(makeEventCard(ev)));
+      events.forEach(ev => {
+         state.calendarEvents[ev.id] = ev;
+         eventList.appendChild(makeEventCard(ev));
+    });
     }
 
     // Show Load more button if within 3-week window
@@ -662,14 +666,16 @@ function makeEventCard(ev) {
       </div>
     </div>
     <button class="btn-use-event"
-            onclick="selectCalendarEvent(${JSON.stringify(ev).replace(/"/g, '&quot;')})">
+            onclick="selectCalendarEvent('${ev.id}')">
       Use this meeting
     </button>`;
   return div;
 }
 
 // ── Populate form from selected calendar event ──────
-function selectCalendarEvent(ev) {
+function selectCalendarEvent(id) {
+  const ev = state.calendarEvents[id];
+  if (!ev) return;
   setMode('manual');
 
   document.getElementById('f-title').value     = ev.title || '';
@@ -677,7 +683,7 @@ function selectCalendarEvent(ev) {
     ? ev.start.slice(0, 16) : '';
   document.getElementById('f-attendees').value = ev.attendees || '';
   const agendaParts = [ev.location, ev.description].filter(Boolean);
-  document.getElementById('f-agenda').value = agendaParts.join('\n\n');
+  document.getElementById('f-agenda').value = agendaParts.join('\n\n');;
 
   document.getElementById('manual-form').scrollIntoView({
     behavior: 'smooth', block: 'start'
