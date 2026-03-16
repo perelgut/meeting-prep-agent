@@ -28,6 +28,8 @@ const state = {
   calendarOffset: 0,
   calendarAccessToken: null,
   calendarEvents: {},
+  investigationQueue: [],
+  investigationRunning: false,
 };
 
 // ── Helper: read all form fields ───────────────────
@@ -255,17 +257,28 @@ function makeTopicCard(t, isPostponed = false) {
 }
 
 // ── Investigate a topic ─────────────────────────────
-async function investigateTopic(id, prefix = '') {
+function investigateTopic(id, prefix = '') {
+  state.investigationQueue.push({ id, prefix });
+  processInvestigationQueue();
+}
+
+async function processInvestigationQueue() {
+  if (state.investigationRunning) return;
+  if (state.investigationQueue.length === 0) return;
+
+  state.investigationRunning = true;
+  const { id, prefix } = state.investigationQueue.shift();
+
   const topic = state.topics.find(t => t.id === id);
   hideActions(prefix + id);
   showLoading(prefix + id);
   setPill(prefix + id, 'Researching…', 'pill-prog');
 
-const attendeeNote = topic.type === 'attendee'
+  const attendeeNote = topic.type === 'attendee'
     ? `\nIf researching a person, first confirm whether they are currently alive and in their stated role. If the person is deceased, state this clearly as the first sentence and note when they died. Do not present a deceased person as a current meeting participant.\n`
     : '';
 
-const prompt = `Research the following topic for a meeting briefing.
+  const prompt = `Research the following topic for a meeting briefing.
 Topic: ${topic.label}
 Search query: ${topic.query}
 Meeting context: ${state.meeting.title} — ${state.meeting.agenda}
@@ -273,15 +286,14 @@ ${attendeeNote}
 Return a concise 2–3 sentence summary of the most relevant recent
 findings. Be specific — include names, dates, and figures where
 available. Do not use generic filler.`;
+
   try {
-    const data = await callClaude({
+    const summary = await callWithRetry({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       messages: [{ role: 'user', content: prompt }],
-    });
-
-    const summary = getTextFromResponse(data);
+    }, prefix + id);
 
     showResult(prefix + id, summary);
     setPill(prefix + id, 'Investigated', 'pill-done');
@@ -292,6 +304,33 @@ available. Do not use generic filler.`;
     showResult(prefix + id, 'Research failed: ' + err.message);
     setPill(prefix + id, 'Error', 'pill-block');
     markTopicDone(id, 'error');
+  }
+
+  state.investigationRunning = false;
+  processInvestigationQueue();
+}
+
+async function callWithRetry(payload, cardId) {
+  const attempt = async () => {
+    const data = await callClaude(payload);
+    if (data?.error?.type === 'rate_limit_error') {
+      throw Object.assign(new Error('rate_limit'), { isRateLimit: true });
+    }
+    if (data?.type === 'error' && data?.error?.type === 'rate_limit_error') {
+      throw Object.assign(new Error('rate_limit'), { isRateLimit: true });
+    }
+    return getTextFromResponse(data);
+  };
+
+  try {
+    return await attempt();
+  } catch (err) {
+    if (err.isRateLimit) {
+      if (cardId) setPill(cardId, 'Rate limited — retrying in 15s…', 'pill-warn');
+      await new Promise(r => setTimeout(r, 15000));
+      return await attempt();
+    }
+    throw err;
   }
 }
 
@@ -455,13 +494,13 @@ that reads naturally, not a uniform grid of single sentences.
 Do not reference or quote the private context.`;
 
   try {
-    const data = await callClaude({
+    const rawText = await callWithRetry({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
       messages: [{ role: 'user', content: prompt }],
-    });
+    }, null);
 
-    const text = getTextFromResponse(data).replace(/```json|```/g, '').trim();
+    const text = rawText.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(text);
 
     sectionsEl.innerHTML = '';
@@ -471,9 +510,10 @@ Do not reference or quote the private context.`;
     toggleSection(1);
 
   } catch (err) {
-    sectionsEl.innerHTML = `<div class="error-msg">
-      Synthesis failed: ${err.message}. Please try again.
-    </div>`;
+    const msg = err.message.includes('rate_limit')
+      ? 'Rate limit reached. Please wait 60 seconds and try again.'
+      : `Synthesis failed: ${err.message}. Please try again.`;
+    sectionsEl.innerHTML = `<div class="error-msg">${msg}</div>`;
   }
 }
 
