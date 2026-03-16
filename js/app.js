@@ -213,7 +213,7 @@ function makeTopicCard(t, isPostponed = false) {
   const prefix = isPostponed ? 'post-' : '';
   const div = document.createElement('div');
   div.className = 'topic-card';
-  div.id = 'card-' + t.id;
+  div.id = 'card-' + prefix + t.id;
 
   const tagClass = {
     news_topic: 'tag-news', attendee: 'tag-att',
@@ -311,7 +311,8 @@ function skipTopic(id, prefix = '') {
 
 // ── Queue helpers ───────────────────────────────────
 function markTopicDone(id, outcome) {
-  const card = document.getElementById('card-' + id);
+  const card = document.getElementById('card-post-' + id) ||
+               document.getElementById('card-' + id);
   if (card) card.classList.add('faded');
   const topic = state.topics.find(t => t.id === id);
   if (topic) topic._outcome = outcome;
