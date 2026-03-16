@@ -63,6 +63,7 @@
   .phase-4 .phase-num { background: var(--ok-bg); color: var(--ok-txt); }
   .phase-5 .phase-num { background: #fbeaf0; color: #72243e; }
   .phase-6 .phase-num { background: #e1f5ee; color: #085041; }
+  .phase-7 .phase-num { background: #eeedfe; color: #3c3489; }
 
   .task-grid { display: grid; gap: 8px; }
 
@@ -688,6 +689,66 @@ present a deceased person as a current meeting participant.</pre>`
 </ul>
 <p>MCP server URL: <code>https://gcal.mcp.claude.com/mcp</code><br>
 Requires Google Calendar to be connected in Claude.ai integrations.</p>`
+      }
+    ]
+  },
+  {
+    id: 7, label: "Phase 7", title: "UX enhancements",
+    desc: "Improvements identified during live testing",
+    tasks: [
+      {
+        id: "p7-t1", title: "Show inactive Generate button with progress count",
+        file: "js/app.js", dep: null,
+        detail: `<p>Currently the "Generate briefing document" button only appears after all research topics have been actioned. Users have no indication the button exists or how close they are to unlocking it.</p>
+<p><strong>Proposed behaviour:</strong></p>
+<ul>
+<li>Show the button immediately when the research queue opens, in a greyed-out disabled state</li>
+<li>Display a progress count: "5 of 6 topics actioned"</li>
+<li>When all topics have a response, the button becomes coloured and active</li>
+</ul>
+<p><strong>Implementation in app.js:</strong></p>
+<ul>
+<li>Render the complete banner with a disabled button at queue open time</li>
+<li>Update counter and button state inside <code>updateQueueCount()</code></li>
+<li>Enable the button when <code>done === total</code></li>
+</ul>`
+      },
+      {
+        id: "p7-t2", title: "Add rate limit retry guidance to synthesis error",
+        file: "js/app.js", dep: null,
+        detail: `<p>When the synthesis call hits the Anthropic rate limit (30,000 input tokens per minute), the error message currently says "Synthesis failed: API error: rate_limit_error...". This is accurate but not helpful to a student.</p>
+<p>Update the error display in <code>runSynthesis()</code> to detect rate limit errors specifically and show a friendly message:</p>
+<pre>if (err.message.includes('rate_limit')) {
+  sectionsEl.innerHTML = '&lt;div class="error-msg"&gt;
+    Rate limit reached. Please wait 60 seconds and try again.
+    This happens when too much research was conducted in a short time.
+  &lt;/div&gt;';
+} else {
+  sectionsEl.innerHTML = '&lt;div class="error-msg"&gt;
+    Synthesis failed: ' + err.message + '. Please try again.
+  &lt;/div&gt;';
+}</pre>`
+      },
+      {
+        id: "p7-t3", title: "Test and verify .docx download",
+        file: null, dep: null,
+        detail: `<p>The .docx download has not been successfully tested end-to-end yet. The rate limit error prevented reaching it in earlier tests.</p>
+<p>Test checklist:</p>
+<ul>
+<li>Click "Download .docx" after a successful synthesis</li>
+<li>Confirm the file saves to the Downloads folder</li>
+<li>Open the file in Microsoft Word or LibreOffice</li>
+<li>Confirm all 5 sections are present with correct headings</li>
+<li>Confirm bullet points are formatted correctly</li>
+<li>Confirm the file name includes the meeting title slug</li>
+</ul>
+<p>Note: Microsoft Edge may show "Tracking Prevention blocked access to storage" warnings for the docx.js CDN. These are cosmetic — the download should work regardless.</p>`
+      },
+      {
+        id: "p7-t4", title: "Add section count to briefing header",
+        file: "js/app.js", dep: null,
+        detail: `<p>After synthesis, show a summary line under the briefing title indicating how many research topics contributed to the briefing. For example: "Based on 5 researched topics".</p>
+<p>This gives the user confidence that the briefing reflects the research they conducted.</p>`
       }
     ]
   }
