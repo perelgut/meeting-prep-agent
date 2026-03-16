@@ -25,6 +25,8 @@ const state = {
   clarifications: [],
   results: [],
   postponed: [],
+  calendarOffset: 0,
+  calendarAccessToken: null,
 };
 
 // ── Helper: read all form fields ───────────────────
@@ -522,6 +524,7 @@ function setMode(mode) {
     btnManual.classList.remove('active');
     calendarPicker.style.display = 'block';
     manualForm.style.display = 'none';
+    state.calendarOffset = 0;
     fetchCalendarEvents();
   } else {
     btnManual.classList.add('active');
@@ -532,32 +535,39 @@ function setMode(mode) {
 }
 
 // ── Fetch calendar events via MCP ───────────────────
-async function fetchCalendarEvents() {
+async function fetchCalendarEvents(append = false) {
   const loadingCard = document.getElementById('calendar-loading-card');
   const eventList   = document.getElementById('event-list');
-  loadingCard.style.display = 'block';
-  eventList.innerHTML = '';
+
+  if (!append) {
+    loadingCard.style.display = 'block';
+    eventList.innerHTML = '';
+  }
+
+  // Remove existing Load more button if present
+  const existingBtn = document.getElementById('btn-load-more');
+  if (existingBtn) existingBtn.remove();
 
   try {
-    const accessToken = await getGoogleAccessToken();
+    if (!state.calendarAccessToken) {
+      state.calendarAccessToken = await getGoogleAccessToken();
+    }
 
-    const now     = new Date().toISOString();
-    const weekOut = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const start   = new Date(Date.now() + state.calendarOffset * 24 * 60 * 60 * 1000);
+    const end     = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events` +
-      `?timeMin=${encodeURIComponent(now)}` +
-      `&timeMax=${encodeURIComponent(weekOut)}` +
+      `?timeMin=${encodeURIComponent(start.toISOString())}` +
+      `&timeMax=${encodeURIComponent(end.toISOString())}` +
       `&singleEvents=true` +
       `&orderBy=startTime` +
       `&maxResults=10`;
 
     const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${state.calendarAccessToken}` }
     });
 
-    if (!response.ok) {
-      throw new Error(`Google Calendar API error: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Google Calendar API error: ${response.status}`);
 
     const data   = await response.json();
     const events = (data.items || []).map(ev => ({
@@ -571,12 +581,26 @@ async function fetchCalendarEvents() {
 
     loadingCard.style.display = 'none';
 
-    if (events.length === 0) {
-      eventList.innerHTML = '<p class="no-items">No upcoming events found in the next 7 days.</p>';
-      return;
+    if (events.length === 0 && !append) {
+      eventList.innerHTML = '<p class="no-items">No events found in this period.</p>';
+    } else {
+      events.forEach(ev => eventList.appendChild(makeEventCard(ev)));
     }
 
-    events.forEach(ev => eventList.appendChild(makeEventCard(ev)));
+    // Show Load more button if within 3-week window
+    if (state.calendarOffset < 14) {
+      const btn = document.createElement('button');
+      btn.id = 'btn-load-more';
+      btn.className = 'btn-load-more';
+      const nextStart = new Date(end);
+      const nextEnd   = new Date(end.getTime() + 7 * 24 * 60 * 60 * 1000);
+      btn.textContent = `Load more — ${nextStart.toLocaleDateString('en-CA', {month:'short',day:'numeric'})} to ${nextEnd.toLocaleDateString('en-CA', {month:'short',day:'numeric'})} →`;
+      btn.onclick = () => {
+        state.calendarOffset += 7;
+        fetchCalendarEvents(true);
+      };
+      eventList.appendChild(btn);
+    }
 
   } catch (err) {
     loadingCard.style.display = 'none';
