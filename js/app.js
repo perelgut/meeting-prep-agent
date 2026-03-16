@@ -534,6 +534,14 @@ function setMode(mode) {
   }
 }
 
+// ── Strip HTML tags from text ───────────────────────
+function stripHtml(html) {
+  if (!html) return '';
+  const el = document.createElement('div');
+  el.innerHTML = html;
+  return (el.innerText || el.textContent || '').trim();
+}
+
 // ── Fetch calendar events via MCP ───────────────────
 async function fetchCalendarEvents(append = false) {
   const loadingCard = document.getElementById('calendar-loading-card');
@@ -576,7 +584,8 @@ async function fetchCalendarEvents(append = false) {
       start:       ev.start?.dateTime || ev.start?.date || '',
       end:         ev.end?.dateTime   || ev.end?.date   || '',
       attendees:   (ev.attendees || []).map(a => a.displayName || a.email).join(', '),
-      description: ev.description || '',
+      location:    ev.location || '',
+      description: stripHtml(ev.description),
     }));
 
     loadingCard.style.display = 'none';
@@ -667,7 +676,8 @@ function selectCalendarEvent(ev) {
   document.getElementById('f-datetime').value  = ev.start
     ? ev.start.slice(0, 16) : '';
   document.getElementById('f-attendees').value = ev.attendees || '';
-  document.getElementById('f-agenda').value    = ev.description || '';
+  const agendaParts = [ev.location, ev.description].filter(Boolean);
+  document.getElementById('f-agenda').value = agendaParts.join('\n\n');
 
   document.getElementById('manual-form').scrollIntoView({
     behavior: 'smooth', block: 'start'
