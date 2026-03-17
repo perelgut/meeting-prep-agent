@@ -259,6 +259,10 @@ function makeTopicCard(t, isPostponed = false) {
 // ── Investigate a topic ─────────────────────────────
 function investigateTopic(id, prefix = '') {
   state.investigationQueue.push({ id, prefix });
+  if (state.investigationRunning) {
+    hideActions(prefix + id);
+    setPill(prefix + id, 'Queued…', 'pill-muted');
+  }
   processInvestigationQueue();
 }
 
@@ -326,9 +330,15 @@ async function callWithRetry(payload, cardId) {
     return await attempt();
   } catch (err) {
     if (err.isRateLimit) {
-      if (cardId) setPill(cardId, 'Rate limited — retrying in 15s…', 'pill-warn');
-      await new Promise(r => setTimeout(r, 15000));
-      return await attempt();
+      if (cardId) setPill(cardId, 'Rate limited — retrying in 60s…', 'pill-warn');
+      await new Promise(r => setTimeout(r, 60000));
+      try {
+        return await attempt();
+      } catch (retryErr) {
+        throw new Error(retryErr.isRateLimit
+          ? 'Rate limit persists — please wait a minute and try again'
+          : retryErr.message);
+      }
     }
     throw err;
   }
