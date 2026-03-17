@@ -2,7 +2,7 @@
 
 **Course:** Computer Programming — AI Agents Module  
 **Project:** Meeting Prep Agent  
-**Last Updated:** Session 3, Entry 180 — Google Calendar integration fully functional; both entry points working
+**Last Updated:** Session 3, Entry 189 — Full pipeline confirmed working; rate limit handling complete
 
 ---
 
@@ -5330,6 +5330,235 @@ Both workflows green. Testing auto-fill with location and description.
 
 **Task tracker updates due:**
 - p6-t5: Google Calendar integration → Done ✅
+
+---
+
+### Entry 181 — Observation: attendee name format "Wassyng, Alan" from Google Calendar
+**Date:** Session 3  
+**Type:** Quality observation — data formatting, not a bug
+
+**Calendar event attendees confirmed:**
+- Don Aldridge (organiser)
+- Stephen Perelgut
+- Wassyng, Alan (stored in Google Calendar in Last, First format)
+
+**Root cause:** Alan Wassyng's name is stored in Google Calendar
+as "Wassyng, Alan" — last name first with a comma. This is how
+it appears in the API `displayName` field. The application displays
+it exactly as received.
+
+**Not a code bug.** The application faithfully relays what Google
+Calendar returns. The unusual format is a data entry convention
+in the contact's Google profile.
+
+**Practical impact:** The attendees field in the form will show
+`Don Aldridge, Stephen Perelgut, Wassyng, Alan` — the comma in
+"Wassyng, Alan" could be misread as a separator. The user can
+edit the field before proceeding.
+
+**Potential enhancement:** Detect and reformat "Last, First" names
+to "First Last" before populating the form. This would be a
+heuristic (look for a single comma in a name token) and could
+produce incorrect results for names that legitimately contain
+commas. Deferred — not worth the complexity for an edge case.
+
+**Teaching point:** Source data quality directly affects output
+quality. The form is editable precisely for situations like this.
+
+---
+
+### Entry 182 — Rate limit prevention: options documented; awaiting decision
+**Date:** Session 3  
+**Type:** Quality improvement — rate limit handling
+
+**Problem:** 30,000 input tokens per minute limit on free/low-tier
+Anthropic account. Multiple rapid "Investigate now" clicks trigger
+simultaneous API calls that collectively exceed the limit.
+
+**Options:**
+
+**A — Sequential queue:** All investigation calls queued and
+processed one at a time. User clicks freely; execution is serialised.
+Most robust but most complex.
+
+**B — Throttle with delay:** Short mandatory pause between clicks.
+Simple but slightly frustrating UX.
+
+**C — Auto-retry with backoff:** On rate limit error, wait 15 seconds
+and retry automatically. Shows "Rate limited — retrying in 15s…"
+on the card. Transparent recovery, minimal code change.
+
+**D — Upgrade account:** Higher tier = higher limits. Right long-term
+answer, not an immediate fix.
+
+**Recommendation:** Option C for immediate implementation, with a
+note in the appendix about Option D for classroom deployments.
+
+Awaiting instructor decision on which option to implement.
+
+---
+
+### Entry 183 — Rate limit handling: implementing Option A (queue) + Option C (auto-retry)
+**Date:** Session 3  
+**Type:** Implementation — rate limit prevention
+
+**Both options being implemented together:**
+
+**Option A — Sequential investigation queue:**
+- `state.investigationQueue` array holds pending topic IDs
+- `state.investigationRunning` boolean prevents parallel execution
+- `investigateTopic()` adds to queue and starts processing if idle
+- `processQueue()` works through the queue one call at a time
+
+**Option C — Auto-retry with backoff on rate limit:**
+- `investigateTopicCall()` makes the actual API call
+- If response is rate_limit_error, waits 15 seconds and retries
+  once automatically
+- Shows "Rate limited — retrying in 15s…" on the card pill
+- If retry also fails, shows the error message
+
+**Combined effect:** Topics are processed one at a time (A),
+and if a rate limit still occurs it recovers automatically (C).
+
+---
+
+### Entry 184 — Sequential queue and auto-retry deployed; both workflows green; testing
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**Both rate limit fixes deployed:**
+- Sequential investigation queue via `processInvestigationQueue()` ✅
+- Auto-retry with 15 second backoff via `callWithRetry()` ✅
+- Rate limit pill message: "Rate limited — retrying in 15s…" ✅
+
+Both workflows green. Testing behaviour under rapid clicking.
+
+**Expected behaviour:**
+- Multiple "Investigate now" clicks queue up rather than fire simultaneously
+- Each topic processes one at a time
+- If rate limit hit, card shows retry message and recovers after 15s
+
+---
+
+### Entry 185 — Auto-retry not triggering; rate limit check order wrong
+**Date:** Session 3  
+**Type:** Bug fix
+
+**Two issues observed:**
+1. The last investigation still fails with rate limit error instead
+   of retrying — the retry logic is not triggering
+2. Synthesis also hits rate limit with no retry
+
+**Root cause of issue 1:**
+In `callWithRetry()`, the rate limit check happens AFTER
+`getTextFromResponse(data)` is called. But when the API returns
+a rate limit error, `data.content` is undefined — so
+`getTextFromResponse` throws its own error first, before the
+rate limit check runs. The `isRateLimit` flag is never set.
+
+**Fix:** Check `data?.error?.type` for rate limit BEFORE calling
+`getTextFromResponse()`.
+
+**Root cause of issue 2:**
+`runSynthesis()` calls `callClaude()` directly and uses
+`getTextFromResponse()` directly — it doesn't go through
+`callWithRetry()`. Needs to be updated to use the retry wrapper.
+
+**Both fixes being applied now.**
+
+---
+
+### Entry 186 — Rate limit fixes deployed; testing sequential queue and auto-retry
+**Date:** Session 3  
+**Type:** Implementation — fixes deployed
+
+**Fixes deployed:**
+- `callWithRetry()` now checks `data?.type === 'error'` path for
+  rate limit before calling `getTextFromResponse()` ✅
+- `runSynthesis()` now uses `callWithRetry()` with null cardId ✅
+- Synthesis error message detects rate_limit and shows friendly
+  "wait 60 seconds" message ✅
+- `setPill()` call in retry guarded with `if (cardId)` so synthesis
+  retry doesn't crash on null cardId ✅
+
+Both workflows green. Testing live.
+
+---
+
+### Entry 187 — Retry still failing; UX feedback gap identified
+**Date:** Session 3  
+**Type:** Bug fix + UX enhancement
+
+**Issue 1 — Retry fires but second attempt also rate-limited:**
+The error "Research failed: rate_limit" means the retry IS being
+triggered (the error message comes from the second attempt failing).
+The 15 second wait is not long enough — 6 sequential investigations
+consume tokens continuously and the rate limit window hasn't cleared
+after 15 seconds.
+
+**Fix A:** Increase retry wait from 15 to 60 seconds.
+**Fix B:** Also catch rate limit on the retry attempt and throw
+a cleaner error message.
+
+**Issue 2 — No feedback when topics are queued:**
+When "Investigate now" is clicked while another investigation is
+running, the topic is added to the queue silently. The user sees
+no change on the card — buttons remain active, no indication that
+the request is pending.
+
+**Fix:** In `investigateTopic()`, immediately show a "Queued…"
+pill and hide the action buttons when a topic is added to the queue
+but not immediately processed.
+
+**Both fixes being applied.**
+
+---
+
+### Entry 188 — Queued pill and 60s retry deployed; both workflows green; testing
+**Date:** Session 3  
+**Type:** Implementation — fixes deployed
+
+**Fixes deployed:**
+- `investigateTopic()` shows "Queued…" pill and hides buttons
+  immediately when topic added to queue while another runs ✅
+- Retry wait increased from 15s to 60s ✅
+- Second rate limit on retry gives cleaner error message ✅
+
+Both workflows green. Testing live.
+
+---
+
+### Entry 189 — Full pipeline working with rate limit handling; briefing produced
+**Date:** Session 3  
+**Type:** Live implementation milestone — major
+
+**Confirmed working end-to-end:**
+- "Queued…" pill appears immediately on queued topics ✅
+- "Researching…" pill shows during active investigation ✅
+- "Rate limited — retrying in 60s…" pill shows on rate limit ✅
+- Research continues automatically after retry wait ✅
+- All topics complete and briefing document produced ✅
+
+**Instructor feedback:**
+"I like the 'Queued' and 'Researching' messages. The 'Rate limited
+— retrying in 60s' message works well. And the research continued
+which is good. And it worked all the way to producing a Briefing
+document!"
+
+**Session 3 — major milestones achieved:**
+- All Session 2 bugs fixed (API parsing, postponed round, docx CDN)
+- Google Calendar integration working via direct API + OAuth
+- Load more pagination for calendar events
+- Sequential investigation queue
+- Auto-retry with 60 second backoff on rate limit
+- Queued/Researching UX feedback
+- Full pipeline tested end-to-end from Calendar → Briefing
+
+**Remaining Phase 7 items:**
+- p7-t1: Inactive Generate button with progress count
+- p7-t3: Verify .docx download
+- p7-t4: Research topic count in briefing header
+- p6-t4: Push updated docs/ folder to repository
 
 ---
 

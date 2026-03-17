@@ -900,3 +900,12 @@ textarea:focus {
   color: var(--info-txt);
   background: var(--info-bg);
 }
+
+/* ── 28. Disabled Generate button ─────────────────── */
+.btn-success:disabled,
+.btn-success.btn-disabled {
+  background: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}

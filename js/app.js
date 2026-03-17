@@ -207,6 +207,7 @@ function openResearchQueue() {
     </span>`;
 
   renderTopicCards();
+  showCompleteBanner(true);
 }
 
 // ── Render topic cards ──────────────────────────────
@@ -405,16 +406,28 @@ function showPostponedRound(ids) {
   state.postponed = [];
 }
 
-function showCompleteBanner() {
-  const completed = state.results.length;
-  const discarded = state.topics.filter(t => t._outcome === 'discarded').length;
-  const skipped   = state.topics.filter(
-    t => t._outcome === 'postponed' || t._outcome === 'skipped').length;
+function showCompleteBanner(pending = false) {
+  const done    = state.topics.filter(t => t._outcome).length;
+  const total   = state.topics.length;
+  const banner  = document.getElementById('complete-banner');
+  const btn     = banner.querySelector('.btn-success');
+  const summary = document.getElementById('complete-summary');
 
-  document.getElementById('complete-summary').textContent =
-    `${completed} topic${completed !== 1 ? 's' : ''} researched · ` +
-    `${discarded} discarded · ${skipped} skipped`;
-  document.getElementById('complete-banner').style.display = 'block';
+  banner.style.display = 'block';
+
+  if (pending || done < total) {
+    summary.textContent = `${done} of ${total} topics actioned — complete all to generate briefing`;
+    if (btn) { btn.disabled = true; btn.classList.add('btn-disabled'); }
+  } else {
+    const completed = state.results.length;
+    const discarded = state.topics.filter(t => t._outcome === 'discarded').length;
+    const skipped   = state.topics.filter(
+      t => t._outcome === 'postponed' || t._outcome === 'skipped').length;
+    summary.textContent =
+      `${completed} topic${completed !== 1 ? 's' : ''} researched · ` +
+      `${discarded} discarded · ${skipped} skipped`;
+    if (btn) { btn.disabled = false; btn.classList.remove('btn-disabled'); }
+  }
 }
 
 // ── UI helpers ──────────────────────────────────────
@@ -444,6 +457,8 @@ function updateQueueCount() {
   const total = state.topics.length;
   const el = document.getElementById('queue-count');
   if (el) el.textContent = `${done} of ${total} actioned`;
+  const banner = document.getElementById('complete-banner');
+  if (banner && banner.style.display !== 'none') showCompleteBanner();
 }
 
 // ── Phase 3: Briefing Synthesis ─────────────────────
