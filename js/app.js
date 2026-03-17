@@ -470,7 +470,11 @@ async function runSynthesis() {
   document.getElementById('briefing-title').textContent =
     'Meeting Briefing — ' + state.meeting.title;
   document.getElementById('briefing-date').textContent =
-    state.meeting.datetime;
+    state.meeting.datetime +
+    (state.results.length > 0
+      ? ' · Based on ' + state.results.length + ' researched topic' +
+        (state.results.length !== 1 ? 's' : '')
+      : '');
 
   const sectionsEl = document.getElementById('briefing-sections');
   sectionsEl.innerHTML = `<div class="synth-loading">
