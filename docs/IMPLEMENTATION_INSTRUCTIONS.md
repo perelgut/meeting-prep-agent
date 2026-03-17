@@ -1049,10 +1049,15 @@ async function downloadDocx() {
 Every time you finish a meaningful piece of work:
 
 1. Save all changed files in VS Code (`Ctrl+S` / `Cmd+S`)
-2. In the VS Code terminal: `git add .` → `git commit -m "message"` → `git push`
+2. **Before committing — search for placeholders:**
+   Press **Ctrl+Shift+F** in VS Code to open global search.
+   Search for `YOUR-`. If any results appear, replace them with
+   the real values before proceeding. Placeholders committed to
+   GitHub go live immediately and cause the application to fail.
+3. In the VS Code terminal: `git add .` → `git commit -m "message"` → `git push`
    (or use GitHub Desktop — see Appendix A Section 5)
-3. Go to your repository on GitHub → **Actions** tab
-4. Watch both deployment workflows complete (green checkmark = success)
+4. Go to your repository on GitHub → **Actions** tab
+5. Watch both deployment workflows complete (green checkmark = success)
 
 ### 5.2 If a workflow fails
 

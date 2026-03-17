@@ -2,7 +2,7 @@
 
 **Course:** Computer Programming — AI Agents Module  
 **Project:** Meeting Prep Agent  
-**Last Updated:** Session 3, Entry 189 — Full pipeline confirmed working; rate limit handling complete
+**Last Updated:** Session 3, Entry 195 — p7-t4 done; p6-t4 docs push in progress
 
 ---
 
@@ -5559,6 +5559,99 @@ document!"
 - p7-t3: Verify .docx download
 - p7-t4: Research topic count in briefing header
 - p6-t4: Push updated docs/ folder to repository
+
+---
+
+### Entry 190 — p7-t1: Inactive Generate button with progress count being implemented
+**Date:** Session 3  
+**Type:** Implementation — UX enhancement
+
+**Changes:**
+- `openResearchQueue()` calls `showCompleteBanner(true)` immediately
+- `showCompleteBanner()` accepts `pending` parameter — shows disabled
+  button with progress count when topics remain; active button with
+  full summary when all done
+- `updateQueueCount()` refreshes the banner state after each action
+- CSS: `.btn-disabled` style for greyed out button
+
+---
+
+### Entry 191 — p7-t1 deployed; both workflows green; testing
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**p7-t1 deployed.** Inactive Generate button with progress count.
+Both workflows green. Testing live.
+
+**Expected behaviour:**
+1. Queue opens → button visible but greyed out
+2. "0 of 6 topics actioned — complete all to generate briefing"
+3. Each action updates count: "1 of 6", "2 of 6" etc.
+4. All done → button becomes active, summary shows researched/discarded/skipped
+
+---
+
+### Entry 192 — p7-t1 confirmed working; banner below topic cards
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**p7-t1 confirmed working:**
+- Banner appears below topic cards (requires scrolling with many topics)
+- Count updates as topics are actioned ✅
+- Button disabled while topics remain ✅
+- Button activates when all done ✅
+
+**Root cause of confusion:** The banner is below all topic cards.
+With 6 topics the page is long enough that the banner is off-screen
+until scrolled to. Not a bug — correct behaviour.
+
+**Minor cosmetic consideration:** The banner title "Research complete"
+is shown even while topics are still pending. Could change to
+"Research in progress" while pending and "Research complete" when done.
+Low priority — deferred.
+
+**Task tracker:** p7-t1 → Done ✅
+
+---
+
+### Entry 193 — p7-t3 confirmed; p7-t4 being implemented
+**Date:** Session 3  
+**Type:** Implementation
+
+**p7-t3: .docx download confirmed working.** ✅
+Document downloaded and opened correctly in Word.
+
+**p7-t4: Research topic count in briefing header.**
+Adding researched topic count to the briefing date line:
+"[datetime] · Based on N researched topics"
+One-line change in runSynthesis().
+
+---
+
+### Entry 194 — p7-t4 deployed; both workflows green; testing
+**Date:** Session 3  
+**Type:** Implementation milestone
+
+**p7-t4 deployed.** Research topic count in briefing header.
+Both workflows green. Testing live.
+
+---
+
+### Entry 195 — p7-t4 confirmed; p6-t4 docs push in progress
+**Date:** Session 3  
+**Type:** Implementation milestone + housekeeping
+
+**p7-t4: Research topic count in briefing header — confirmed working.** ✅
+
+**p6-t4: Pushing updated docs folder to repository.**
+Files to update:
+- docs/PROJECT_DOCUMENTATION.md
+- docs/IMPLEMENTATION_INSTRUCTIONS.md
+- docs/APPENDIX_SOFTWARE_TECHNOLOGIES.md
+- tasks/task-tracker.html
+
+These were updated throughout Sessions 2 and 3 but not committed
+to GitHub. Committing now to keep the repository consistent.
 
 ---
 
