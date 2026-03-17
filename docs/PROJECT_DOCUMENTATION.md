@@ -2,7 +2,7 @@
 
 **Course:** Computer Programming — AI Agents Module  
 **Project:** Meeting Prep Agent  
-**Last Updated:** Session 3, Entry 195 — p7-t4 done; p6-t4 docs push in progress
+**Last Updated:** Session 3, Entry 196 — Session 3 closed; Version 2 complete
 
 ---
 
@@ -5652,6 +5652,50 @@ Files to update:
 
 These were updated throughout Sessions 2 and 3 but not committed
 to GitHub. Committing now to keep the repository consistent.
+
+---
+
+### Entry 196 — p6-t4 complete; Session 3 closing audit
+**Date:** Session 3  
+**Type:** Session closure
+
+**p6-t4: Documentation pushed to repository.** ✅
+Both workflows green.
+
+**Session 3 — full audit:**
+
+**Phase 6 — all tasks complete:**
+- p6-t1: Fix API response parsing (getTextFromResponse) ✅
+- p6-t2: Edge tracking prevention warnings — cosmetic only ✅
+- p6-t3: Deceased attendee check in prompt ✅
+- p6-t4: Push updated docs folder ✅
+- p6-t5: Google Calendar integration (direct API + OAuth) ✅
+
+**Phase 7 — all tasks complete:**
+- p7-t1: Inactive Generate button with progress count ✅
+- p7-t2: Rate limit friendly error message in synthesis ✅
+- p7-t3: .docx download verified ✅
+- p7-t4: Research topic count in briefing header ✅
+
+**Additional Session 3 work completed:**
+- Sequential investigation queue (Option A rate limit prevention)
+- Auto-retry with 60s backoff (Option C rate limit prevention)
+- Queued/Researching pill feedback during queue processing
+- Google Calendar pagination (Load more — 3 week window)
+- Calendar auto-fill: location, HTML-stripped description
+- Event store pattern (ID-based, no onclick serialisation)
+- Google Cloud Console OAuth setup documented end-to-end
+
+**Application status: Version 2 complete.**
+Live at: https://perelgut.github.io/meeting-prep-agent
+
+**Outstanding items for Session 4:**
+- Banner title "Research complete" shows even while in progress
+  (cosmetic — low priority)
+- "Last, First" attendee name reformatting (edge case — deferred)
+- Further UX refinements as identified during classroom use
+
+**Session 3 closed.**
 
 ---
 
