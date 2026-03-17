@@ -2,7 +2,7 @@
 
 ## You don't need a computer science degree. You don't need a startup. You don't even need a full week. You just need an idea and two days.
 
-*By a Senior Writer — The Atlantic*
+*By Claude.ai pretending to be a Senior Writer for The Atlantic*
 
 ---
 
@@ -155,5 +155,3 @@ You might be ready to build something of your own.
 *The Meeting Prep Agent is live at https://perelgut.github.io/meeting-prep-agent. The full project documentation — 196 diary entries covering every design decision, every bug, and every surprise — is available in the project repository.*
 
 ---
-
-*© The Atlantic. All rights reserved.*
