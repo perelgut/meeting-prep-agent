@@ -644,7 +644,7 @@ Omit it entirely if correspondence notes are empty or purely professional.`;
   try {
     const rawText = await callWithRetry({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
+      max_tokens: 4000,
       messages: [{ role: 'user', content: prompt }],
     }, null);
 
@@ -805,11 +805,12 @@ Email threads found:
 ${threadText}
 
 Instructions:
-1. First identify which "${attendeeName}" this is — use their email address and context to disambiguate from any public figures with the same name. State this clearly in one sentence.
-2. Summarize recurring topics, concerns, or projects mentioned.
-3. Note anything personal in nature (health, family, personal events) — mark each such item with 🔒
-4. Be specific. Reference subject lines where relevant.
-5. Keep the summary to 3-5 sentences.`;
+1. You are researching ONLY "${attendeeName}" — do not summarize or attribute anything to other people in the email threads.
+2. First identify which "${attendeeName}" this is — use their email address and context to disambiguate from any public figures with the same name. State this clearly in one sentence.
+3. Summarize recurring topics, concerns, or projects that "${attendeeName}" specifically was involved in.
+4. Note anything personal in nature about "${attendeeName}" (health, family, personal events) — mark each such item with 🔒
+5. Be specific. Reference subject lines where relevant.
+6. Keep the summary to 3-5 sentences focused solely on "${attendeeName}".`;
 
   const data = await callClaude({
     model: 'claude-sonnet-4-20250514',
