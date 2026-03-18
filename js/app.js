@@ -731,11 +731,15 @@ async function fetchGmailThreads(query, accessToken, maxResults = 3) {
   const fullQuery = `${query} after:${after}`;
   const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages` +
     `?q=${encodeURIComponent(fullQuery)}&maxResults=${maxResults}`;
+ console.log('Gmail query:', fullQuery);
+  console.log('Gmail URL:', url);
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
-  if (!res.ok) return [];
+  console.log('Gmail response status:', res.status);
   const data = await res.json();
+  console.log('Gmail response data:', JSON.stringify(data).slice(0, 300));
+  if (!res.ok) return [];
   if (!data.messages) return [];
 
   const threads = await Promise.all(data.messages.map(async m => {
