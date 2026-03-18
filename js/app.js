@@ -33,6 +33,7 @@ const state = {
   gmailLookbackDays: 90,
   gmailAccessToken: null,
   missingInvitees: [],
+  userEmail: '',
 };
 
 // ── Helper: read all form fields ───────────────────
@@ -48,6 +49,14 @@ function getMeetingDetails() {
 // ── Phase 1: Topic Discovery ────────────────────────
 async function runDiscovery() {
   state.meeting = getMeetingDetails();
+  // Remove organizer from attendees before discovery
+  if (state.userEmail) {
+    state.meeting.attendees = state.meeting.attendees
+      .split(',')
+      .map(a => a.trim())
+      .filter(a => !a.toLowerCase().includes(state.userEmail.toLowerCase()))
+      .join(', ');
+  }
   state.privateContext = document.getElementById('f-context').value.trim();
   state.gmailLookbackDays = parseInt(document.querySelector('input[name="lookback"]:checked')?.value || '90');
 
@@ -60,6 +69,10 @@ async function runDiscovery() {
 MEETING TITLE: ${state.meeting.title}
 DATE: ${state.meeting.datetime}
 ATTENDEES: ${state.meeting.attendees}
+
+When generating topics for attendees, use the attendee value exactly as provided in the ATTENDEES field as both the 
+topic label and search query. Do not invent or infer display names from email addresses.
+
 AGENDA: ${state.meeting.agenda}
 
 PRIVATE CONTEXT (do not quote, reference, or include in output):
@@ -90,7 +103,8 @@ explanation — with exactly this structure:
 Generate 4–8 topics covering: overall news topic, individual agenda
 items, named attendees, and any topics suggested by the private context.
 Generate 0–3 clarification requests only if specific external information
-would materially improve the briefing.`;
+would materially improve the briefing.${state.userEmail ? `\n
+  Do not generate a research topic for ${state.userEmail} — that is the meeting organizer.` : ''}`;
 
   try {
     const data = await callClaude({
@@ -303,7 +317,7 @@ Return a concise 2–3 sentence professional background. Be specific — include
           messages: [{ role: 'user', content: webPrompt }],
         }, prefix + id),
         searchGmailForAttendee(
-          topic.label,
+          topic.query || topic.label,
           state.meeting.attendees,
           state.meeting.title,
           state.gmailAccessToken
@@ -727,19 +741,27 @@ function setMode(mode) {
 async function fetchGmailThreads(query, accessToken, maxResults = 3) {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - state.gmailLookbackDays);
-  const after = Math.floor(cutoff.getTime() / 1000);
+  const after = cutoff.toISOString().split('T')[0].replace(/-/g, '/');
   const fullQuery = `${query} after:${after}`;
   const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages` +
     `?q=${encodeURIComponent(fullQuery)}&maxResults=${maxResults}`;
- console.log('Gmail query:', fullQuery);
-  console.log('Gmail URL:', url);
+/** Code that gets deleted too often
+ * console.log('Gmail query:', fullQuery);
+ * console.log('Gmail URL:', url);
+ * const res = await fetch(url, {
+ *   headers: { Authorization: `Bearer ${accessToken}` }
+ * });
+ * console.log('Gmail response status:', res.status);
+ * const data = await res.json();
+ * console.log('Gmail response data:', JSON.stringify(data).slice(0, 300));
+ * if (!res.ok) return [];
+ **/
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
-  console.log('Gmail response status:', res.status);
   const data = await res.json();
-  console.log('Gmail response data:', JSON.stringify(data).slice(0, 300));
   if (!res.ok) return [];
+ 
   if (!data.messages) return [];
 
   const threads = await Promise.all(data.messages.map(async m => {
@@ -879,6 +901,17 @@ async function fetchCalendarEvents(append = false) {
     if (!state.calendarAccessToken) {
       state.calendarAccessToken = await getGoogleAccessToken();
       state.gmailAccessToken = state.calendarAccessToken;
+      // Get the authenticated user's email address
+      try {
+        const profileRes = await fetch(
+          'https://gmail.googleapis.com/gmail/v1/users/me/profile',
+          { headers: { Authorization: `Bearer ${state.gmailAccessToken}` } }
+        );
+        if (profileRes.ok) {
+          const profile = await profileRes.json();
+          state.userEmail = profile.emailAddress || '';
+        }
+      } catch (e) { state.userEmail = ''; }
     }
 
     const start   = new Date(Date.now() + state.calendarOffset * 24 * 60 * 60 * 1000);
