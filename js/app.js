@@ -758,36 +758,61 @@ async function fetchGmailThreads(query, accessToken, maxResults = 3) {
 }
 
 async function searchGmailForAttendee(attendeeName, allAttendees, meetingSubject, accessToken) {
-  const otherAttendees = allAttendees
-    .split(',')
-    .map(a => a.trim())
-    .filter(a => a && a !== attendeeName);
+  const attendeeList = allAttendees.split(',').map(a => a.trim()).filter(Boolean);
+  const otherAttendees = attendeeList.filter(a => a !== attendeeName);
+
+  // Extract bare email address if present, e.g. "Alan Wassyng <wassyng@mcmaster.ca>" → "wassyng@mcmaster.ca"
+  const extractEmail = s => {
+    const m = s.match(/<([^>]+)>/);
+    if (m) return m[1].trim();
+    if (/\S+@\S+\.\S+/.test(s)) return s.trim();
+    return null;
+  };
+
+  // Build Gmail query term — email addresses unquoted, display names quoted
+  const queryTerm = s => {
+    const email = extractEmail(s);
+    return email ? email : `"${s}"`;
+  };
+
+  const selfTerm  = queryTerm(attendeeName);
+  const otherTerms = otherAttendees.map(queryTerm);
 
   const [tier1, tier2, tier3] = await Promise.all([
-    // Tier 1: threads with all attendees together
-    otherAttendees.length > 0
-      ? fetchGmailThreads(`(from:"${attendeeName}" OR to:"${attendeeName}") AND (from:"${otherAttendees[0]}" OR to:"${otherAttendees[0]}")`, accessToken)
+    // Tier 1: threads involving this attendee AND at least one other
+    otherTerms.length > 0
+      ? fetchGmailThreads(
+          `(from:${selfTerm} OR to:${selfTerm}) (from:${otherTerms[0]} OR to:${otherTerms[0]})`,
+          accessToken)
       : Promise.resolve([]),
     // Tier 2: threads from or to this attendee
-    fetchGmailThreads(`from:"${attendeeName}" OR to:"${attendeeName}"`, accessToken),
+    fetchGmailThreads(`from:${selfTerm} OR to:${selfTerm}`, accessToken),
     // Tier 3: threads matching meeting subject
-    fetchGmailThreads(`subject:"${meetingSubject.split(' ').slice(0, 4).join(' ')}"`, accessToken),
+    fetchGmailThreads(
+      `subject:"${meetingSubject.split(' ').slice(0, 4).join(' ')}"`,
+      accessToken),
   ]);
 
   // Find missing invitees from tier 3
-  const attendeeList = allAttendees.split(',').map(a => a.trim().toLowerCase());
+  const attendeeEmails = attendeeList.map(a => (extractEmail(a) || a).toLowerCase());
   const missingInvitees = [];
   tier3.forEach(thread => {
     const people = [thread.from, ...(thread.to?.split(',') || [])]
       .map(p => p.trim())
-      .filter(p => p && !attendeeList.some(a => p.toLowerCase().includes(a)));
+      .filter(p => p && !attendeeEmails.some(a => p.toLowerCase().includes(a)));
     people.forEach(p => {
       if (p && !missingInvitees.includes(p)) missingInvitees.push(p);
     });
   });
 
-  // Build combined text for synthesis
-  const allThreads = [...tier1, ...tier2, ...tier3];
+  // Deduplicate threads by subject across tiers
+  const seen = new Set();
+  const allThreads = [...tier1, ...tier2, ...tier3].filter(t => {
+    if (seen.has(t.subject)) return false;
+    seen.add(t.subject);
+    return true;
+  });
+
   if (allThreads.length === 0) {
     return { summary: 'No recent email correspondence found.', missingInvitees: [] };
   }
@@ -810,7 +835,7 @@ Instructions:
 3. Summarize recurring topics, concerns, or projects that "${attendeeName}" specifically was involved in.
 4. Note anything personal in nature about "${attendeeName}" (health, family, personal events) — mark each such item with 🔒
 5. Be specific. Reference subject lines where relevant.
-6. Keep the summary to 3-5 sentences focused solely on "${attendeeName}".`;
+6. Keep the summary to 3–5 sentences focused solely on "${attendeeName}".`;
 
   const data = await callClaude({
     model: 'claude-sonnet-4-20250514',
