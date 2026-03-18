@@ -336,6 +336,9 @@ Return a concise 2–3 sentence professional background. Be specific — include
       markTopicDone(id, 'error');
     }
 
+    state.investigationRunning = false;
+    processInvestigationQueue();
+
   } else {
     const attendeeNote = topic.type === 'attendee'
       ? `\nIf researching a person, first confirm whether they are currently alive and in their stated role. If the person is deceased, state this clearly as the first sentence and note when they died. Do not present a deceased person as a current meeting participant.\n`
@@ -485,7 +488,50 @@ function showCompleteBanner(pending = false) {
       `${completed} topic${completed !== 1 ? 's' : ''} researched · ` +
       `${discarded} discarded · ${skipped} skipped`;
     if (btn) { btn.disabled = false; btn.classList.remove('btn-disabled'); }
+
+    // Show missing invitees if any found during research
+    showMissingInvitees();
   }
+}
+
+function showMissingInvitees() {
+  // Remove any previous missing invitee panel
+  const existing = document.getElementById('missing-invitees-panel');
+  if (existing) existing.remove();
+
+  const unique = [...new Set(state.missingInvitees)];
+  if (unique.length === 0) return;
+
+  const banner = document.getElementById('complete-banner');
+  const panel  = document.createElement('div');
+  panel.id = 'missing-invitees-panel';
+  panel.className = 'missing-invitees';
+
+  panel.innerHTML = `<p class="missing-invitees-title">
+    📧 People found in related emails who are not on this invite:
+  </p>` + unique.map(person => `
+    <div class="missing-invitee-row" id="mi-${btoa(person).replace(/=/g,'').slice(0,8)}">
+      <span class="missing-invitee-name">${person}</span>
+      <button class="action-btn inv" onclick="addMissingInvitee('${person.replace(/'/g,"\\'")}')">Add to meeting</button>
+      <button class="action-btn dis" onclick="dismissMissingInvitee('${person.replace(/'/g,"\\'")}')">Ignore</button>
+    </div>`).join('');
+
+  banner.insertBefore(panel, banner.querySelector('.btn-success'));
+}
+
+function addMissingInvitee(person) {
+  const current = state.meeting.attendees;
+  state.meeting.attendees = current ? current + ', ' + person : person;
+  const row = document.getElementById('mi-' + btoa(person).replace(/=/g,'').slice(0,8));
+  if (row) {
+    row.innerHTML = `<span class="missing-invitee-name">${person}</span>
+      <span class="status-pill pill-done">Added ✓</span>`;
+  }
+}
+
+function dismissMissingInvitee(person) {
+  const row = document.getElementById('mi-' + btoa(person).replace(/=/g,'').slice(0,8));
+  if (row) row.style.display = 'none';
 }
 
 // ── UI helpers ──────────────────────────────────────
