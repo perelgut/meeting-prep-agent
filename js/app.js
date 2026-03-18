@@ -30,6 +30,9 @@ const state = {
   calendarEvents: {},
   investigationQueue: [],
   investigationRunning: false,
+  gmailLookbackDays: 90,
+  gmailAccessToken: null,
+  missingInvitees: [],
 };
 
 // ── Helper: read all form fields ───────────────────
@@ -46,6 +49,7 @@ function getMeetingDetails() {
 async function runDiscovery() {
   state.meeting = getMeetingDetails();
   state.privateContext = document.getElementById('f-context').value.trim();
+  state.gmailLookbackDays = parseInt(document.querySelector('input[name="lookback"]:checked')?.value || '90');
 
   const btn = document.getElementById('btn-discover');
   btn.textContent = 'Identifying topics…';
@@ -629,6 +633,7 @@ async function fetchCalendarEvents(append = false) {
   try {
     if (!state.calendarAccessToken) {
       state.calendarAccessToken = await getGoogleAccessToken();
+      state.gmailAccessToken = state.calendarAccessToken;
     }
 
     const start   = new Date(Date.now() + state.calendarOffset * 24 * 60 * 60 * 1000);
@@ -697,7 +702,7 @@ function getGoogleAccessToken() {
   return new Promise((resolve, reject) => {
     const client = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/calendar.readonly',
+      scope: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly',
       callback: (response) => {
         if (response.error) {
           reject(new Error('Google sign-in failed: ' + response.error));

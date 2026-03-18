@@ -64,6 +64,7 @@
   .phase-5 .phase-num { background: #fbeaf0; color: #72243e; }
   .phase-6 .phase-num { background: #e1f5ee; color: #085041; }
   .phase-7 .phase-num { background: #eeedfe; color: #3c3489; }
+  .phase-8 .phase-num { background: #fef3e2; color: #7a4100; }
 
   .task-grid { display: grid; gap: 8px; }
 
@@ -749,6 +750,117 @@ Requires Google Calendar to be connected in Claude.ai integrations.</p>`
         file: "js/app.js", dep: null,
         detail: `<p>After synthesis, show a summary line under the briefing title indicating how many research topics contributed to the briefing. For example: "Based on 5 researched topics".</p>
 <p>This gives the user confidence that the briefing reflects the research they conducted.</p>`
+      }
+    ]
+  },
+  {
+    id: 8, label: "Phase 8", title: "Gmail-informed attendee research",
+    desc: "Session 4 — deeper briefing via email history",
+    tasks: [
+      {
+        id: "p8-t1", title: "Enable Gmail API and add scope in Google Cloud Console",
+        file: null, dep: null,
+        detail: `<p>Manual setup in Google Cloud Console before any code changes:</p>
+<ol>
+<li>Go to <strong>APIs &amp; Services → Library</strong></li>
+<li>Search for <strong>Gmail API</strong> and enable it</li>
+<li>Go to <strong>OAuth consent screen → Data Access</strong></li>
+<li>Add scope: <code>https://www.googleapis.com/auth/gmail.readonly</code></li>
+<li>Save changes</li>
+</ol>
+<p>Note: gmail.readonly is a sensitive scope. The existing "Testing" mode handles this without Google verification — no additional steps needed.</p>`
+      },
+      {
+        id: "p8-t2", title: "Add lookback window radio selector to meeting details form",
+        file: "index.html", dep: "p8-t1",
+        detail: `<p>Add a radio button group to <code>index.html</code> in the meeting details section, below the private context field and above the "Identify research topics" button.</p>
+<p>Label: <em>"Search email history back:"</em></p>
+<p>Options: 30 days · 90 days · 180 days · 365 days<br>Default: 90 days selected</p>
+<p>Also add CSS for the radio group styling.</p>
+<p>Value stored in <code>state.gmailLookbackDays</code> — update state declaration in app.js.</p>`
+      },
+      {
+        id: "p8-t3", title: "Expand OAuth scope to include gmail.readonly",
+        file: "js/app.js", dep: "p8-t1",
+        detail: `<p>Update <code>getGoogleAccessToken()</code> to request both scopes in a single authorization:</p>
+<pre>scope: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly'</pre>
+<p>The single token returned covers both services. Store as <code>state.gmailAccessToken</code> (same value as <code>state.calendarAccessToken</code>).</p>
+<p>Add <code>gmailAccessToken: null</code> and <code>gmailLookbackDays: 90</code> and <code>missingInvitees: []</code> to the state object.</p>`
+      },
+      {
+        id: "p8-t4", title: "Implement searchGmailForAttendee() function",
+        file: "js/app.js", dep: "p8-t3",
+        detail: `<p>New function: <code>searchGmailForAttendee(attendeeName, allAttendees, meetingSubject, accessToken, lookbackDays)</code></p>
+<p>Issues three parallel Gmail API queries using <code>Promise.all()</code>:</p>
+<ul>
+<li><strong>Tier 1 (highest priority):</strong> Threads where all meeting attendees appear together</li>
+<li><strong>Tier 2:</strong> Threads from or to this specific attendee</li>
+<li><strong>Tier 3:</strong> Threads where subject matches meeting subject</li>
+</ul>
+<p>Fetch top <strong>3 thread bodies per tier</strong> (not 5 — cap confirmed in spec).</p>
+<p>For Tier 3 matches: extract From/To fields and identify people not on the attendee list → add to <code>state.missingInvitees</code>.</p>
+<p>Pass combined results to a Claude synthesis call that: (1) disambiguates the attendee identity using email address, (2) summarizes correspondence, (3) marks personal items with 🔒.</p>
+<p>Returns: <code>{ identity, summary, missingInvitees }</code></p>`
+      },
+      {
+        id: "p8-t5", title: "Update investigateTopic() for attendee topics",
+        file: "js/app.js", dep: "p8-t4",
+        detail: `<p>For topics of type <code>attendee</code>, run web search and Gmail search <strong>in parallel</strong> using <code>Promise.all()</code>.</p>
+<p>Pass both results to a combined synthesis prompt that produces a two-section structured result:</p>
+<ul>
+<li><strong>Professional background</strong> — from web search</li>
+<li><strong>Recent correspondence (last N days)</strong> — from Gmail, with 🔒 flags</li>
+</ul>
+<p>If Gmail search fails or returns nothing, proceed with web search only and note the fallback in the correspondence section.</p>
+<p>All attendee topics in the queue are processed in parallel (not sequentially) for the Gmail search phase — only the Claude synthesis calls remain sequential via the existing queue.</p>`
+      },
+      {
+        id: "p8-t6", title: "Add missing invitee clarification cards",
+        file: "js/app.js", dep: "p8-t5",
+        detail: `<p>After attendee Gmail searches complete, check <code>state.missingInvitees</code> for people who appeared in meeting-subject emails but are not on the invite.</p>
+<p>For each missing invitee, add a clarification card to the clarification panel:</p>
+<ul>
+<li><strong>Label:</strong> "Possible missing invitee: [Name]"</li>
+<li><strong>Body:</strong> "[Name] appears in [N] emails about [subject] but is not on this meeting invite. Should they be included?"</li>
+<li><strong>Actions:</strong> Add to attendees / Ignore</li>
+</ul>
+<p>These cards appear at the top of the clarification list, before other clarification requests.</p>`
+      },
+      {
+        id: "p8-t7", title: "Update runSynthesis() for correspondence and 6th section",
+        file: "js/app.js", dep: "p8-t5",
+        detail: `<p>Two changes to the synthesis prompt:</p>
+<ol>
+<li>Include the Gmail correspondence summary for each attendee in the research block passed to synthesis</li>
+<li>Instruct Claude to carry 🔒 flags through to the final briefing</li>
+<li>Add a conditional 6th section: <strong>"Relationship &amp; Correspondence Notes"</strong> — only included when Gmail results contain personal context worth surfacing. If no personal context exists, the section is omitted entirely (no empty state).</li>
+</ol>`
+      },
+      {
+        id: "p8-t8", title: "Update two-section card display in showResult()",
+        file: "js/app.js", dep: "p8-t5",
+        detail: `<p>Update <code>showResult()</code> to accept structured HTML for attendee topics, rendering the two labelled subsections with a visual divider:</p>
+<pre>── Professional background ──────────────
+[web search summary]
+
+── Recent correspondence (last N days) ──
+[gmail summary with 🔒 flags]</pre>
+<p>For non-attendee topics, <code>showResult()</code> behaviour is unchanged.</p>`
+      },
+      {
+        id: "p8-t9", title: "End-to-end test with real attendees and Gmail",
+        file: null, dep: "p8-t8",
+        detail: `<p>Test the complete flow with a real meeting that has real attendees in Gmail:</p>
+<ul>
+<li>Verify the lookback selector changes the search window</li>
+<li>Verify attendee identity disambiguation works (correct Don Aldridge, not a famous person)</li>
+<li>Verify two-section card display renders correctly</li>
+<li>Verify 🔒 flags appear on personal items</li>
+<li>Verify missing invitee clarification cards appear if applicable</li>
+<li>Verify the 6th briefing section appears when personal context exists</li>
+<li>Verify the 6th section is absent when no personal context found</li>
+<li>Verify graceful fallback if Gmail authorization is denied</li>
+</ul>`
       }
     ]
   }

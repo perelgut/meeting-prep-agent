@@ -2,7 +2,7 @@
 
 **Course:** Computer Programming — AI Agents Module  
 **Project:** Meeting Prep Agent  
-**Last Updated:** Session 3, Entry 196 — Session 3 closed; Version 2 complete
+**Last Updated:** Session 4, Entry 204 — Phase 8 project plan complete; 9 tasks in tracker; ready to build
 
 ---
 
@@ -5696,6 +5696,197 @@ Live at: https://perelgut.github.io/meeting-prep-agent
 - Further UX refinements as identified during classroom use
 
 **Session 3 closed.**
+
+---
+
+### Entry 197 — Session 4 commenced
+**Date:** Session 4  
+**Type:** Session opening
+
+**Session 4 opened.**
+
+**Completed between Session 3 and Session 4:**
+- Atlantic-style article: HOW_TO_CREATE_YOUR_OWN_AI_AGENT.md
+- 2-day workshop detailed agenda: WORKSHOP_AGENDA.md
+- Executive presentation slides: EXECUTIVE_PRESENTATION_SLIDES.md
+- Executive presentation speaker notes: EXECUTIVE_PRESENTATION_SPEAKER_NOTES.md
+
+**Application status at Session 4 open:**
+Version 2 complete and live at https://perelgut.github.io/meeting-prep-agent
+
+**Known open items carried from Session 3:**
+- Banner title shows "Research complete" even while topics still pending (cosmetic)
+- "Last, First" attendee name reformatting (deferred edge case)
+- Documentation files from Session 3 pushed to repo but the new docs
+  (article, workshop agenda, presentation) not yet committed to repository
+
+**Session 4 agenda:** To be determined by instructor.
+
+---
+
+### Entry 198 — Session 4: two capability enhancements proposed and analysed
+**Date:** Session 4  
+**Type:** Design discussion
+
+**Two enhancements proposed by instructor:**
+
+**1. Attendee disambiguation:**
+Problem: agent conflates famous people with private contacts of the
+same name (Ronald Reagan example). Three-layer solution proposed:
+- Layer 1: meeting context as prior (personal lunch → private individual)
+- Layer 2: Gmail search for correspondence with that person
+- Layer 3: clarification card asking user for context if both fail
+
+**2. Gmail-informed research:**
+Search user's email for threads involving meeting attendees, filtered
+by date range and topic relevance. Adds a "Relationship Notes" or
+"Recent Correspondence Context" section to the briefing covering
+personal signals (health, family, recurring topics) that web search
+cannot find.
+
+Example use case: has Don Aldridge emailed about his health or
+his grandson? Could inform lunch conversation topics.
+
+**Design question raised:** Privacy model for Gmail search — how
+should personal email signals be handled in the briefing?
+
+**Two decisions needed from instructor before implementation:**
+1. Which capability to tackle first (or both?)
+2. Privacy model for Gmail personal signals
+
+---
+
+### Entry 199 — Session 4: Gmail search selected; design approved pending confirmation
+**Date:** Session 4  
+**Type:** Design decision
+
+**Gmail-informed attendee research selected for Session 4.**
+Attendee disambiguation deferred to Session 5.
+
+**Rationale:** Gmail search delivers deeper value — relationship
+context and personal signals that web search cannot find. The Don
+Aldridge use case (health/grandson) is the concrete example that
+drives the design.
+
+**Privacy model confirmed:** Show everything to the user (they own
+the Gmail account). Flag visibly personal items with 🔒 so the user
+knows to treat them as sensitive topics.
+
+**Design:**
+- Two sources per attendee: web search (professional) + Gmail (relationship)
+- Separate labelled subsections on the result card
+- Gmail search: by name/email, configurable lookback (default 90 days)
+- Claude flags personal signals with 🔒 in the synthesis
+- Gmail API called directly (same Bearer token pattern as Calendar)
+- gmail.readonly scope added to Google Cloud OAuth consent screen
+
+**Session 5 candidate:** Attendee disambiguation (Ronald Reagan problem)
+— three-layer approach: meeting context prior, Gmail search, clarification card.
+
+**Awaiting instructor confirmation before implementation begins.**
+
+---
+
+### Entry 200 — Gmail research requirements drafted; awaiting approval
+**Date:** Session 4  
+**Type:** Requirements — draft
+
+**Eight requirements drafted for Gmail-informed attendee research:**
+
+- R1: Gmail search per attendee (alongside existing web search)
+- R2: Configurable lookback window (default 90 days; 30/90/180/365 options)
+- R3: Search scope (sender, recipient, mentioned by name; topically relevant)
+- R4: Two-source result display (Professional background + Recent correspondence)
+- R5: Privacy flagging (🔒 for personal items; carried through to briefing)
+- R6: Gmail authorization (gmail.readonly scope; requested alongside calendar)
+- R7: No storage (consistent with existing no-persistence architecture)
+- R8: Graceful degradation (falls back to web search only if Gmail unavailable)
+
+**Awaiting instructor approval before expanding to specification.**
+
+---
+
+### Entry 201 — Gmail research requirements revised and approved
+**Date:** Session 4  
+**Type:** Requirements — approved
+
+**Instructor revisions applied:**
+
+**R1 updated:** Gmail results used to confirm attendee identity
+(disambiguation). All attendee Gmail searches run in parallel.
+
+**R3 significantly expanded — three-tier prioritization:**
+1. Threads where ALL attendees appear together (highest priority)
+2. Threads from/to specific attendee
+3. Threads where subject matches meeting subject
+For tier 3: surface people in From/To who are not on the invite
+and ask user: "Should they be included?"
+
+**R2, R4–R8:** Approved as written.
+
+**Requirements now approved. Ready to expand to specification.**
+
+---
+
+### Entry 202 — Gmail research specification drafted; awaiting approval
+**Date:** Session 4  
+**Type:** Specification — draft
+
+**Specification covers 8 sections:**
+1. UI changes: lookback selector, two-section card layout, missing invitee clarification card
+2. State changes: gmailLookbackDays, gmailAccessToken, missingInvitees
+3. Authorization: single scope expansion covers both Calendar and Gmail
+4. New function: searchGmailForAttendee() — three parallel queries, Claude synthesis
+5. investigateTopic() changes: parallel web + Gmail for attendee topics
+6. runDiscovery() changes: missing invitee cards added to clarification panel
+7. runSynthesis() changes: correspondence in research block, 🔒 flags, optional 6th section
+8. Google Cloud Console prerequisites: Gmail API + scope
+
+**Awaiting instructor approval before expanding to project plan.**
+
+---
+
+### Entry 203 — Specification decisions confirmed; proceeding to project plan
+**Date:** Session 4  
+**Type:** Specification — approved with three clarifications
+
+**Three specification decisions confirmed:**
+
+1. **Combined OAuth scope:** Request Calendar + Gmail in single popup — acceptable
+2. **Thread fetch limit:** Top 3 per tier (not 5) — can revisit later
+3. **6th briefing section:** Only shown when content exists — no empty state
+
+**Specification approved. Proceeding to project plan and task tracker.**
+
+---
+
+### Entry 204 — Phase 8 project plan and task tracker complete
+**Date:** Session 4  
+**Type:** Project planning milestone
+
+**Phase 8 added to task tracker — 9 tasks:**
+
+| Task | Title |
+|------|-------|
+| p8-t1 | Enable Gmail API and add scope in Google Cloud Console (manual) |
+| p8-t2 | Add lookback window radio selector to meeting details form |
+| p8-t3 | Expand OAuth scope to include gmail.readonly |
+| p8-t4 | Implement searchGmailForAttendee() function |
+| p8-t5 | Update investigateTopic() for attendee topics |
+| p8-t6 | Add missing invitee clarification cards |
+| p8-t7 | Update runSynthesis() for correspondence and 6th section |
+| p8-t8 | Update two-section card display in showResult() |
+| p8-t9 | End-to-end test with real attendees and Gmail |
+
+**Dependencies:**
+p8-t1 (manual prerequisite) → p8-t2, p8-t3
+p8-t3 → p8-t4 → p8-t5 → p8-t6, p8-t7, p8-t8 → p8-t9
+
+**Array boundary verified before commit** (Entry 114 commitment honoured).
+
+**Ready to begin implementation.**
+Natural starting point: p8-t1 (Google Cloud Console — manual, 5 minutes)
+then p8-t2 and p8-t3 in parallel.
 
 ---
 
