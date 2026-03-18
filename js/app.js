@@ -283,11 +283,65 @@ async function processInvestigationQueue() {
   showLoading(prefix + id);
   setPill(prefix + id, 'Researching…', 'pill-prog');
 
-  const attendeeNote = topic.type === 'attendee'
-    ? `\nIf researching a person, first confirm whether they are currently alive and in their stated role. If the person is deceased, state this clearly as the first sentence and note when they died. Do not present a deceased person as a current meeting participant.\n`
-    : '';
+  if (topic.type === 'attendee' && state.gmailAccessToken) {
+    // Run web search and Gmail search in parallel
+    const attendeeNote = `\nIf researching a person, first confirm whether they are currently alive and in their stated role. If the person is deceased, state this clearly as the first sentence and note when they died. Do not present a deceased person as a current meeting participant.\n`;
 
-  const prompt = `Research the following topic for a meeting briefing.
+    const webPrompt = `Research the following person for a meeting briefing.
+Topic: ${topic.label}
+Search query: ${topic.query}
+Meeting context: ${state.meeting.title} — ${state.meeting.agenda}
+${attendeeNote}
+Return a concise 2–3 sentence professional background. Be specific — include current role, relevant recent activity, and any notable public positions.`;
+
+    try {
+      const [webResult, gmailResult] = await Promise.all([
+        callWithRetry({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 500,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          messages: [{ role: 'user', content: webPrompt }],
+        }, prefix + id),
+        searchGmailForAttendee(
+          topic.label,
+          state.meeting.attendees,
+          state.meeting.title,
+          state.gmailAccessToken
+        ).catch(() => ({ summary: 'Gmail search unavailable.', missingInvitees: [] }))
+      ]);
+
+      // Add missing invitees to state
+      if (gmailResult.missingInvitees?.length > 0) {
+        state.missingInvitees.push(...gmailResult.missingInvitees);
+      }
+
+      const combinedSummary = webResult;
+      const html = `<div class="result-section">
+        <div class="result-section-label">Professional background</div>
+        <div>${webResult}</div>
+      </div>
+      <div class="result-section">
+        <div class="result-section-label">Recent correspondence (last ${state.gmailLookbackDays} days)</div>
+        <div>${gmailResult.summary}</div>
+      </div>`;
+
+      showResultHtml(prefix + id, html);
+      setPill(prefix + id, 'Investigated', 'pill-done');
+      state.results.push({ type: topic.type, label: topic.label, summary: combinedSummary + '\n\nCorrespondence: ' + gmailResult.summary });
+      markTopicDone(id, 'complete');
+
+    } catch (err) {
+      showResult(prefix + id, 'Research failed: ' + err.message);
+      setPill(prefix + id, 'Error', 'pill-block');
+      markTopicDone(id, 'error');
+    }
+
+  } else {
+    const attendeeNote = topic.type === 'attendee'
+      ? `\nIf researching a person, first confirm whether they are currently alive and in their stated role. If the person is deceased, state this clearly as the first sentence and note when they died. Do not present a deceased person as a current meeting participant.\n`
+      : '';
+
+    const prompt = `Research the following topic for a meeting briefing.
 Topic: ${topic.label}
 Search query: ${topic.query}
 Meeting context: ${state.meeting.title} — ${state.meeting.agenda}
@@ -296,18 +350,18 @@ Return a concise 2–3 sentence summary of the most relevant recent
 findings. Be specific — include names, dates, and figures where
 available. Do not use generic filler.`;
 
-  try {
-    const summary = await callWithRetry({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{ role: 'user', content: prompt }],
-    }, prefix + id);
+    try {
+      const summary = await callWithRetry({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }],
+      }, prefix + id);
 
-    showResult(prefix + id, summary);
-    setPill(prefix + id, 'Investigated', 'pill-done');
-    state.results.push({ type: topic.type, label: topic.label, summary });
-    markTopicDone(id, 'complete');
+      showResult(prefix + id, summary);
+      setPill(prefix + id, 'Investigated', 'pill-done');
+      state.results.push({ type: topic.type, label: topic.label, summary });
+      markTopicDone(id, 'complete');
 
   } catch (err) {
     showResult(prefix + id, 'Research failed: ' + err.message);
@@ -449,6 +503,12 @@ function showResult(id, text) {
   if (loading) loading.style.display = 'none';
   if (result)  { result.textContent = text; result.style.display = 'block'; }
 }
+function showResultHtml(id, html) {
+  const loading = document.getElementById('loading-' + id);
+  const result  = document.getElementById('result-' + id);
+  if (loading) loading.style.display = 'none';
+  if (result)  { result.innerHTML = html; result.style.display = 'block'; }
+}
 function setPill(id, text, cls) {
   const el = document.getElementById('pill-' + id);
   if (!el) return;
@@ -509,22 +569,30 @@ Return ONLY valid JSON — no markdown, no explanation:
 
 {
   "sections": [
-    { "title": "Meeting Overview & Agenda",   "bullets": ["...", "..."] },
-    { "title": "Attendee Backgrounds",        "bullets": ["...", "..."] },
-    { "title": "Suggested Talking Points",    "bullets": ["...", "..."] },
-    { "title": "Questions to Ask",            "bullets": ["...", "..."] },
-    { "title": "Recent Relevant News",        "bullets": ["...", "..."] }
+    { "title": "Meeting Overview & Agenda",           "bullets": ["...", "..."] },
+    { "title": "Attendee Backgrounds",                "bullets": ["...", "..."] },
+    { "title": "Suggested Talking Points",            "bullets": ["...", "..."] },
+    { "title": "Questions to Ask",                    "bullets": ["...", "..."] },
+    { "title": "Recent Relevant News",                "bullets": ["...", "..."] },
+    { "title": "Relationship & Correspondence Notes", "bullets": ["..."] }
   ]
 }
 
 Be specific. Use names, dates, and figures from the research results.
 Do not use generic filler.
-Write 2–6 bullets per section. Each bullet can be 1–5 sentences long — use
-as many sentences as the point requires to be genuinely useful. Do not pad
+Write 5 or 6 bullets per section. Each bullet can be 1–5 sentences long — use
+as many sentences as the content requires to be genuinely useful. Do not pad
 short points and do not truncate important ones. A well-researched section
 may warrant more bullets or longer ones. The goal is a professional briefing
 that reads naturally, not a uniform grid of single sentences.
-Do not reference or quote the private context.`;
+Do not reference or quote the private context.
+If any research result contains items marked with 🔒, carry those flags through
+to the relevant bullet in the briefing so the reader knows to treat that
+information with discretion.
+If correspondence notes contain meaningful personal context, add a sixth section:
+{ "title": "Relationship & Correspondence Notes", "bullets": ["..."] }
+Only include this section if there is genuine personal context to share.
+Omit it entirely if correspondence notes are empty or purely professional.`;
 
   try {
     const rawText = await callWithRetry({
@@ -606,6 +674,106 @@ function setMode(mode) {
     manualForm.style.display = 'block';
     calendarPicker.style.display = 'none';
   }
+}
+
+// ── Gmail search helpers ────────────────────────────
+async function fetchGmailThreads(query, accessToken, maxResults = 3) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - state.gmailLookbackDays);
+  const after = Math.floor(cutoff.getTime() / 1000);
+  const fullQuery = `${query} after:${after}`;
+  const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages` +
+    `?q=${encodeURIComponent(fullQuery)}&maxResults=${maxResults}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  if (!data.messages) return [];
+
+  const threads = await Promise.all(data.messages.map(async m => {
+    const msgUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=To`;
+    const msgRes = await fetch(msgUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!msgRes.ok) return null;
+    const msg = await msgRes.json();
+    const headers = msg.payload?.headers || [];
+    const get = name => headers.find(h => h.name === name)?.value || '';
+    return {
+      subject: get('Subject'),
+      from:    get('From'),
+      to:      get('To'),
+      snippet: msg.snippet || '',
+    };
+  }));
+  return threads.filter(Boolean);
+}
+
+async function searchGmailForAttendee(attendeeName, allAttendees, meetingSubject, accessToken) {
+  const otherAttendees = allAttendees
+    .split(',')
+    .map(a => a.trim())
+    .filter(a => a && a !== attendeeName);
+
+  const [tier1, tier2, tier3] = await Promise.all([
+    // Tier 1: threads with all attendees together
+    otherAttendees.length > 0
+      ? fetchGmailThreads(`(from:"${attendeeName}" OR to:"${attendeeName}") AND (from:"${otherAttendees[0]}" OR to:"${otherAttendees[0]}")`, accessToken)
+      : Promise.resolve([]),
+    // Tier 2: threads from or to this attendee
+    fetchGmailThreads(`from:"${attendeeName}" OR to:"${attendeeName}"`, accessToken),
+    // Tier 3: threads matching meeting subject
+    fetchGmailThreads(`subject:"${meetingSubject.split(' ').slice(0, 4).join(' ')}"`, accessToken),
+  ]);
+
+  // Find missing invitees from tier 3
+  const attendeeList = allAttendees.split(',').map(a => a.trim().toLowerCase());
+  const missingInvitees = [];
+  tier3.forEach(thread => {
+    const people = [thread.from, ...(thread.to?.split(',') || [])]
+      .map(p => p.trim())
+      .filter(p => p && !attendeeList.some(a => p.toLowerCase().includes(a)));
+    people.forEach(p => {
+      if (p && !missingInvitees.includes(p)) missingInvitees.push(p);
+    });
+  });
+
+  // Build combined text for synthesis
+  const allThreads = [...tier1, ...tier2, ...tier3];
+  if (allThreads.length === 0) {
+    return { summary: 'No recent email correspondence found.', missingInvitees: [] };
+  }
+
+  const threadText = allThreads.map((t, i) =>
+    `Thread ${i + 1}: Subject: "${t.subject}" | From: ${t.from} | Snippet: ${t.snippet}`
+  ).join('\n');
+
+  const prompt = `Summarize the email correspondence context for "${attendeeName}" based on these recent threads.
+
+Meeting context: ${meetingSubject}
+All attendees: ${allAttendees}
+
+Email threads found:
+${threadText}
+
+Instructions:
+1. First identify which "${attendeeName}" this is — use their email address and context to disambiguate from any public figures with the same name. State this clearly in one sentence.
+2. Summarize recurring topics, concerns, or projects mentioned.
+3. Note anything personal in nature (health, family, personal events) — mark each such item with 🔒
+4. Be specific. Reference subject lines where relevant.
+5. Keep the summary to 3-5 sentences.`;
+
+  const data = await callClaude({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 500,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  return {
+    summary: getTextFromResponse(data),
+    missingInvitees,
+  };
 }
 
 // ── Strip HTML tags from text ───────────────────────
