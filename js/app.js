@@ -366,14 +366,15 @@ available. Do not use generic filler.`;
       state.results.push({ type: topic.type, label: topic.label, summary });
       markTopicDone(id, 'complete');
 
-  } catch (err) {
-    showResult(prefix + id, 'Research failed: ' + err.message);
-    setPill(prefix + id, 'Error', 'pill-block');
-    markTopicDone(id, 'error');
-  }
+    } catch (err) {
+      showResult(prefix + id, 'Research failed: ' + err.message);
+      setPill(prefix + id, 'Error', 'pill-block');
+      markTopicDone(id, 'error');
+    }
 
-  state.investigationRunning = false;
-  processInvestigationQueue();
+    state.investigationRunning = false;
+    processInvestigationQueue();
+  }
 }
 
 async function callWithRetry(payload, cardId) {
