@@ -95,13 +95,13 @@ async function downloadDocx() {
 
     btn.textContent = '✓ Downloaded';
     setTimeout(() => {
-      btn.textContent = 'Download .docx';
+      btn.textContent = 'Done with refinements — Download briefing';
       btn.disabled = false;
     }, 3000);
 
   } catch (err) {
     alert('Download failed: ' + err.message);
-    btn.textContent = 'Download .docx';
+    btn.textContent = 'Done with refinements — Download briefing';
     btn.disabled = false;
   }
 }
