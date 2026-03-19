@@ -608,7 +608,12 @@ async function runSynthesis() {
   </div>`;
 
   const researchBlock = state.results
-    .map(r => `[${r.type.toUpperCase()}] ${r.label}:\n${r.summary}`)
+    .map(r => {
+      const clean = (r.summary || '')
+        .replace(/[\u0000-\u001F\u007F]/g, ' ')  // strip control characters
+        .replace(/`/g, "'");                        // replace backticks
+      return `[${r.type.toUpperCase()}] ${r.label}:\n${clean}`;
+    })
     .join('\n\n');
 
   const prompt = `You are preparing a professional meeting briefing document.
@@ -658,7 +663,7 @@ Omit it entirely if correspondence notes are empty or purely professional.`;
   try {
     const rawText = await callWithRetry({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 4000,
+      max_tokens: 6000,
       messages: [{ role: 'user', content: prompt }],
     }, null);
 
