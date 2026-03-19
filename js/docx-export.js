@@ -25,6 +25,12 @@ async function downloadDocx() {
       }
     }
 
+    // Collect refinement cards if any exist
+    const refinementSections = state.refinements.map(r => ({
+      title:   r.title,
+      bullets: [r.response],
+    }));
+
     const title = document.getElementById('briefing-title').textContent;
     const date  = document.getElementById('briefing-date').textContent;
 
@@ -61,7 +67,7 @@ async function downloadDocx() {
             children: [new TextRun({ text: date, color: '666666', size: 22 })],
             spacing: { after: 400 },
           }),
-          ...sections.flatMap(s => [
+          ...[...sections, ...refinementSections].flatMap(s => [
             new Paragraph({
               heading: HeadingLevel.HEADING_1,
               children: [new TextRun(s.title)],

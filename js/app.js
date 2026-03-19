@@ -34,6 +34,8 @@ const state = {
   gmailAccessToken: null,
   missingInvitees: [],
   userEmail: '',
+  // refinements: [{ title: string, request: string, response: string }]
+  refinements: [],
 };
 
 // ── Helper: read all form fields ───────────────────
@@ -610,11 +612,17 @@ async function runSynthesis() {
   const researchBlock = state.results
     .map(r => {
       const clean = (r.summary || '')
-        .replace(/[\u0000-\u001F\u007F]/g, ' ')  // strip control characters
-        .replace(/`/g, "'");                        // replace backticks
+        .replace(/[\u0000-\u001F\u007F]/g, ' ')
+        .replace(/`/g, "'");
       return `[${r.type.toUpperCase()}] ${r.label}:\n${clean}`;
     })
     .join('\n\n');
+
+  const refinementBlock = state.refinements.length > 0
+    ? '\n\nPREVIOUS REFINEMENTS:\n' + state.refinements
+        .map(r => `[REFINEMENT: ${r.title}]:\n${r.response}`)
+        .join('\n\n')
+    : '';
 
   const prompt = `You are preparing a professional meeting briefing document.
 
@@ -624,7 +632,7 @@ ATTENDEES: ${state.meeting.attendees}
 AGENDA: ${state.meeting.agenda}
 
 RESEARCH RESULTS:
-${researchBlock || 'No research results collected.'}
+${researchBlock || 'No research results collected.'}${refinementBlock}
 
 PRIVATE CONTEXT — shape your emphasis using this. Do NOT quote,
 reference, or include this text anywhere in the output:
@@ -682,6 +690,98 @@ Omit it entirely if correspondence notes are empty or purely professional.`;
       : `Synthesis failed: ${err.message}. Please try again.`;
     sectionsEl.innerHTML = `<div class="error-msg">${msg}</div>`;
   }
+}
+
+// ── Briefing refinement ─────────────────────────────
+async function runRefinement() {
+  const input = document.getElementById('refinement-input');
+  const request = input.value.trim();
+  if (!request) return;
+
+  const btn = document.getElementById('btn-refine');
+  const cardsEl = document.getElementById('refinement-cards');
+  btn.disabled = true;
+  btn.textContent = 'Refining…';
+
+  const spinner = document.createElement('div');
+  spinner.className = 'synth-loading';
+  spinner.innerHTML = '<div class="spinner"></div><span>Claude is augmenting your briefing…</span>';
+  cardsEl.appendChild(spinner);
+
+  const researchBlock = state.results
+    .map(r => `[${r.type.toUpperCase()}] ${r.label}:\n${r.summary}`)
+    .join('\n\n');
+
+  const previousRefinements = state.refinements.length > 0
+    ? '\n\nPREVIOUS REFINEMENTS:\n' + state.refinements
+        .map(r => `[${r.title}]:\n${r.response}`)
+        .join('\n\n')
+    : '';
+
+  const prompt = `You are augmenting a professional meeting briefing.
+
+MEETING: ${state.meeting.title}
+DATE: ${state.meeting.datetime}
+ATTENDEES: ${state.meeting.attendees}
+AGENDA: ${state.meeting.agenda}
+
+RESEARCH RESULTS:
+${researchBlock || 'No research results collected.'}
+${previousRefinements}
+
+USER REQUEST:
+${request}
+
+Respond to the user's request by drawing on the meeting details and research above.
+Do not repeat content already covered unless directly relevant to this request.
+Flag any personal items with 🔒.
+
+Return ONLY valid JSON — no markdown, no explanation:
+{
+  "title": "A concise, specific title for this augmentation (not a restatement of the question)",
+  "response": "Your substantive response here"
+}`;
+
+  try {
+    const data = await callClaude({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const text = getTextFromResponse(data).replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(text);
+
+    state.refinements.push({
+      title:    parsed.title,
+      request:  request,
+      response: parsed.response,
+    });
+
+    spinner.remove();
+
+    const card = document.createElement('div');
+    card.className = 'refinement-card';
+    card.innerHTML = `
+      <div class="refinement-card-header">
+        <span class="refinement-card-title">${parsed.title}</span>
+        <span class="refinement-card-source">Based on: "${request.slice(0, 60)}${request.length > 60 ? '…' : ''}"</span>
+      </div>
+      <div class="refinement-card-body">${parsed.response}</div>`;
+    cardsEl.appendChild(card);
+
+    input.value = '';
+
+  } catch (err) {
+    spinner.remove();
+    const errDiv = document.createElement('div');
+    errDiv.className = 'error-msg';
+    errDiv.textContent = 'Refinement failed: ' + err.message;
+    cardsEl.appendChild(errDiv);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Refine briefing →';
 }
 
 function makeSectionCard(section, num) {

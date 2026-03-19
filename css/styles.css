@@ -984,3 +984,70 @@ textarea:focus {
   font-size: 13px;
   color: var(--text);
 }
+
+/* ── 32. Briefing refinement panel ─────────────────── */
+.refinement-panel {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.refinement-header {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.refinement-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+.refinement-input:focus {
+  outline: none;
+  border-color: var(--info-txt);
+}
+
+.refinement-card {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--info-txt);
+  border-radius: 8px;
+}
+
+.refinement-card-header {
+  margin-bottom: 8px;
+}
+
+.refinement-card-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.refinement-card-source {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.refinement-card-body {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+}

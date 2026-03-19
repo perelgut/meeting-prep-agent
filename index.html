@@ -198,6 +198,26 @@
           <h2 id="briefing-title">Meeting Briefing</h2>
           <p id="briefing-date" class="briefing-date"></p>
         </div>
+        <div id="refinement-panel" class="refinement-panel">
+  <div class="refinement-header">Augment these briefing notes</div>
+  <textarea id="refinement-input" class="refinement-input"
+    placeholder="Ask a question, add context, or request a new angle…"
+    rows="3"></textarea>
+  <button class="btn-primary" id="btn-refine" onclick="runRefinement()">
+    Refine briefing →
+  </button>
+  <div id="refinement-cards"></div>
+</div>
+        <div id="refinement-panel" class="refinement-panel">
+          <div class="refinement-header">Augment these briefing notes</div>
+          <textarea id="refinement-input" class="refinement-input"
+             placeholder="Ask a question, add context, or request a new angle…"
+             rows="3"></textarea>
+         <button class="btn-primary" id="btn-refine" onclick="runRefinement()">
+             Refine briefing →
+         </button>
+         <div id="refinement-cards"></div>
+        </div>
         <button class="btn-download" id="btn-download"
                 onclick="downloadDocx()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
